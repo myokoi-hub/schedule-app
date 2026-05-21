@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スケジュール調整 - 結果</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <h1>📅 スケジュール調整</h1>
+  </header>
+
+  <div class="container">
+    <div class="card" id="shareCard" style="display:none">
+      <div class="card-title">参加者に送るURL</div>
+      <p class="hint" style="margin-bottom:10px">このURLを参加者に送ると、出欠を入力してもらえます</p>
+      <div class="share-box">
+        <input type="text" id="shareUrl" readonly>
+        <button class="btn btn-secondary" onclick="copyUrl()">コピー</button>
+      </div>
+    </div>
+
+    <div class="card" id="mainCard">
+      <div style="text-align:center;padding:24px;color:#999">読み込み中...</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get('id');
+
+    async function load() {
+      if (!eventId) { showError('URLが正しくありません'); return; }
+      try {
+        const res = await fetch(`/api/events/${eventId}/results`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        render(data);
+      } catch {
+        showError('イベントが見つかりません');
+      }
+    }
+
+    function render(data) {
+      const { title, description, dates, responses } = data;
+
+      // share URL
+      const shareUrl = `${location.origin}/event.html?id=${eventId}`;
+      document.getElementById('shareUrl').value = shareUrl;
+      document.getElementById('shareCard').style.display = 'block';
+
+      // participants & answer map
+      const participants = [...new Set(responses.map(r => r.participant_name))];
+      const answerMap = {};
+      responses.forEach(r => {
+        if (!answerMap[r.participant_name]) answerMap[r.participant_name] = {};
+        answerMap[r.participant_name][r.date_id] = r.availability;
+      });
+
+      // counts per date
+      const counts = {};
+      dates.forEach(d => { counts[d.id] = { '○': 0, '△': 0, '×': 0 }; });
+      responses.forEach(r => {
+        if (counts[r.date_id] && r.availability) counts[r.date_id][r.availability]++;
+      });
+
+      const markHtml = (v) => {
+        if (v === '○') return `<span class="m-maru">○</span>`;
+        if (v === '△') return `<span class="m-sankaku">△</span>`;
+        if (v === '×') return `<span class="m-batsu">×</span>`;
+        return `<span class="m-none">-</span>`;
+      };
+
+      let tableHtml;
+      if (participants.length === 0) {
+        tableHtml = `<p style="text-align:center;color:#aaa;padding:28px 0">まだ回答がありません</p>`;
+      } else {
+        const rows = participants.map(p => `
+          <tr>
+            <td>${esc(p)}</td>
+            ${dates.map(d => `<td>${markHtml(answerMap[p]?.[d.id])}</td>`).join('')}
+          </tr>
+        `).join('');
+
+        const countRow = `
+          <tr class="count-row">
+            <td>○の合計</td>
+            ${dates.map(d => `<td class="m-maru">${counts[d.id]['○']}</td>`).join('')}
+          </tr>
+        `;
+
+        tableHtml = `
+          <div style="overflow-x:auto">
+            <table class="result-table">
+              <thead>
+                <tr>
+                  <th style="text-align:left">参加者</th>
+                  ${dates.map(d => `<th>${esc(d.date_label)}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>${rows}${countRow}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      document.getElementById('mainCard').innerHTML = `
+        <div class="card-title">${esc(title)}</div>
+        ${description ? `<p style="color:#666;font-size:14px;margin-bottom:18px">${esc(description)}</p>` : ''}
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="section-label" style="margin:0">回答状況（${participants.length}名）</div>
+          <button class="btn btn-secondary" onclick="load()" style="font-size:13px;padding:6px 14px">更新</button>
+        </div>
+
+        ${tableHtml}
+
+        <div style="margin-top:20px;text-align:center">
+          <a href="/event.html?id=${eventId}" class="btn btn-secondary">自分も回答する</a>
+          &nbsp;
+          <a href="/" class="btn btn-secondary">新しいイベントを作る</a>
+        </div>
+      `;
+    }
+
+    function copyUrl() {
+      const val = document.getElementById('shareUrl').value;
+      navigator.clipboard.writeText(val).then(() => showToast('URLをコピーしました！'));
+    }
+
+    function showError(msg) {
+      document.getElementById('mainCard').innerHTML = `<p style="color:#e55;text-align:center;padding:20px">${msg}</p>`;
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    load();
+  </script>
+</body>
+</html>

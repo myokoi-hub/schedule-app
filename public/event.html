@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スケジュール調整 - 回答</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <h1>📅 スケジュール調整</h1>
+  </header>
+
+  <div class="container">
+    <div class="card" id="mainCard">
+      <div style="text-align:center;padding:24px;color:#999">読み込み中...</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get('id');
+    let eventDates = [];
+
+    async function load() {
+      if (!eventId) { showError('URLが正しくありません'); return; }
+      try {
+        const res = await fetch(`/api/events/${eventId}`);
+        if (!res.ok) throw new Error();
+        const event = await res.json();
+        eventDates = event.dates;
+        render(event);
+      } catch {
+        showError('イベントが見つかりません');
+      }
+    }
+
+    function render(event) {
+      const rowsHtml = event.dates.map(d => `
+        <tr>
+          <td>${esc(d.date_label)}</td>
+          <td>
+            <div class="avail-btn-group">
+              <button class="avail-btn" data-date="${d.id}" data-val="○" onclick="select(this)" title="参加できる">○</button>
+              <button class="avail-btn" data-date="${d.id}" data-val="△" onclick="select(this)" title="未定">△</button>
+              <button class="avail-btn" data-date="${d.id}" data-val="×" onclick="select(this)" title="参加できない">×</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('mainCard').innerHTML = `
+        <div class="card-title">${esc(event.title)}</div>
+        ${event.description ? `<p style="color:#666;font-size:14px;margin-bottom:18px">${esc(event.description)}</p>` : ''}
+
+        <div class="form-group">
+          <label>お名前 <span style="color:#e55">*</span></label>
+          <input type="text" id="nameInput" placeholder="例: 田中 太郎" style="max-width:280px">
+        </div>
+
+        <div class="section-label" style="margin-bottom:8px">出欠を選んでください</div>
+        <p class="hint" style="margin-bottom:12px">○ 参加できる &nbsp;／&nbsp; △ 未定 &nbsp;／&nbsp; × 参加できない</p>
+
+        <div style="overflow-x:auto;margin-bottom:24px">
+          <table class="avail-table">
+            <thead>
+              <tr>
+                <th style="text-align:left">候補日程</th>
+                <th style="min-width:120px">回答</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+
+        <button class="btn btn-primary" onclick="submit()">回答を送信する</button>
+        <p style="text-align:center;margin-top:14px">
+          <a href="/result.html?id=${eventId}" style="color:#4A90D9;font-size:13px">結果を見る →</a>
+        </p>
+      `;
+    }
+
+    function select(btn) {
+      const dateId = btn.dataset.date;
+      document.querySelectorAll(`.avail-btn[data-date="${dateId}"]`).forEach(b => {
+        b.classList.remove('selected-maru', 'selected-sankaku', 'selected-batsu');
+      });
+      const cls = btn.dataset.val === '○' ? 'selected-maru'
+                : btn.dataset.val === '△' ? 'selected-sankaku' : 'selected-batsu';
+      btn.classList.add(cls);
+    }
+
+    async function submit() {
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name) { showToast('お名前を入力してください'); return; }
+
+      const answers = eventDates.map(d => {
+        const selected = document.querySelector(`.avail-btn[data-date="${d.id}"].selected-maru, .avail-btn[data-date="${d.id}"].selected-sankaku, .avail-btn[data-date="${d.id}"].selected-batsu`);
+        return { date_id: d.id, availability: selected ? selected.dataset.val : '×' };
+      });
+
+      try {
+        const res = await fetch(`/api/events/${eventId}/responses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ participant_name: name, answers })
+        });
+        if (!res.ok) throw new Error();
+        showToast('回答を送信しました！');
+        setTimeout(() => { window.location.href = `/result.html?id=${eventId}`; }, 1200);
+      } catch {
+        showToast('送信に失敗しました。もう一度お試しください。');
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('mainCard').innerHTML = `<p style="color:#e55;text-align:center;padding:20px">${msg}</p>`;
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    load();
+  </script>
+</body>
+</html>
