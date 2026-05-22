@@ -320,6 +320,92 @@ input[type="text"]:focus, textarea:focus {
 }
 .chip-remove:hover { color: #e55; }
 
+/* ===== ヘッダーナビ ===== */
+.header { position: relative; }
+.header-nav { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
+.header-nav a {
+  color: rgba(255,255,255,0.9); font-size: 13px;
+  text-decoration: none; padding: 5px 10px;
+  border-radius: 6px; transition: background 0.15s;
+  white-space: nowrap;
+}
+.header-nav a:hover { background: rgba(255,255,255,0.2); }
+
+/* ===== モーダル ===== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2000; padding: 16px;
+}
+.modal {
+  background: white; border-radius: 14px;
+  padding: 24px; width: 100%; max-width: 420px;
+  max-height: 82vh; overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.modal-title {
+  font-size: 16px; font-weight: bold; color: #4A90D9;
+  margin-bottom: 16px; padding-bottom: 12px;
+  border-bottom: 2px solid #EBF4FF;
+}
+
+/* 宛先チップ（モーダル内） */
+.email-chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; min-height: 28px; }
+.email-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #4A90D9; color: white; border-radius: 20px;
+  padding: 4px 10px; font-size: 13px; cursor: pointer;
+  transition: background 0.15s;
+}
+.email-chip:hover { background: #E63946; }
+
+/* 連絡先検索 */
+.contact-search {
+  width: 100%; padding: 10px 13px;
+  border: 1px solid #ddd; border-radius: 8px;
+  font-size: 15px; font-family: inherit;
+  background: #FAFAFA; margin-bottom: 8px;
+}
+.contact-search:focus { outline: none; border-color: #4A90D9; background: white; }
+
+/* 連絡先ピッカーリスト */
+.contact-picker-list {
+  max-height: 220px; overflow-y: auto;
+  border: 1px solid #eee; border-radius: 8px;
+}
+.contact-picker-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; cursor: pointer;
+  border-bottom: 1px solid #F5F5F5; transition: background 0.1s;
+}
+.contact-picker-item:last-child { border-bottom: none; }
+.contact-picker-item:hover { background: #F0F7FF; }
+.contact-picker-item.cp-selected { background: #EBF4FF; }
+.contact-check {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid #ccc; display: flex; align-items: center;
+  justify-content: center; font-size: 13px; color: transparent;
+  flex-shrink: 0; transition: all 0.15s;
+}
+.cp-selected .contact-check { background: #4A90D9; border-color: #4A90D9; color: white; }
+
+/* 連絡先リスト（contacts.html） */
+.contact-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 0; border-bottom: 1px solid #F0F0F0;
+}
+.contact-item:last-child { border-bottom: none; }
+.contact-info { flex: 1; min-width: 0; }
+.contact-name { font-size: 15px; font-weight: bold; color: #333; }
+.contact-email { font-size: 13px; color: #888; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 連絡先追加フォーム */
+.contact-add-form {
+  background: #F8FAFF; border: 1px solid #B3D4F0;
+  border-radius: 10px; padding: 16px; margin-bottom: 16px;
+}
+
 /* ===== スマホ対応 ===== */
 @media (max-width: 600px) {
   .container { margin: 16px auto; }

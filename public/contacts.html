@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アドレス帳 - スケジュール調整</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4A90D9">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+</head>
+<body>
+  <header class="header">
+    <h1>📅 スケジュール調整</h1>
+    <nav class="header-nav"><a href="/">← トップ</a></nav>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-title">📇 アドレス帳</div>
+
+      <!-- 追加フォーム（トグル） -->
+      <div class="contact-add-form" id="addForm" style="display:none">
+        <div class="form-group">
+          <label>名前 <span style="color:#e55">*</span></label>
+          <input type="text" id="newName" placeholder="例: 田中太郎"
+            onkeydown="if(event.key==='Enter')document.getElementById('newEmail').focus()">
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label>メールアドレス <span style="color:#e55">*</span></label>
+          <input type="email" id="newEmail" placeholder="例: tanaka@example.com"
+            onkeydown="if(event.key==='Enter')saveContact()">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="saveContact()" style="flex:1">保存</button>
+          <button class="btn btn-secondary" onclick="toggleForm(false)">キャンセル</button>
+        </div>
+      </div>
+
+      <button class="btn btn-add" id="addBtn" onclick="toggleForm(true)">＋ 連絡先を追加</button>
+
+      <!-- 連絡先リスト -->
+      <div id="contactList" style="margin-top:16px"></div>
+    </div>
+
+    <p class="hint" style="text-align:center;margin-top:-8px">
+      登録した連絡先は、このスマホ・PCにのみ保存されます
+    </p>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    function getContacts() {
+      return JSON.parse(localStorage.getItem('schedule_contacts') || '[]');
+    }
+    function saveContacts(list) {
+      localStorage.setItem('schedule_contacts', JSON.stringify(list));
+    }
+
+    function toggleForm(show) {
+      document.getElementById('addForm').style.display = show ? 'block' : 'none';
+      document.getElementById('addBtn').style.display  = show ? 'none'  : 'block';
+      if (show) {
+        document.getElementById('newName').value  = '';
+        document.getElementById('newEmail').value = '';
+        document.getElementById('newName').focus();
+      }
+    }
+
+    function saveContact() {
+      const name  = document.getElementById('newName').value.trim();
+      const email = document.getElementById('newEmail').value.trim();
+      if (!name)  { showToast('名前を入力してください'); return; }
+      if (!email || !email.includes('@')) { showToast('正しいメールアドレスを入力してください'); return; }
+
+      const list = getContacts();
+      // 重複チェック
+      if (list.some(c => c.email.toLowerCase() === email.toLowerCase())) {
+        showToast('そのメールアドレスはすでに登録されています'); return;
+      }
+      list.push({ id: Date.now().toString(), name, email });
+      list.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+      saveContacts(list);
+      toggleForm(false);
+      renderList();
+      showToast('追加しました！');
+    }
+
+    function deleteContact(id) {
+      if (!confirm('この連絡先を削除しますか？')) return;
+      saveContacts(getContacts().filter(c => c.id !== id));
+      renderList();
+      showToast('削除しました');
+    }
+
+    function renderList() {
+      const list = getContacts();
+      const el   = document.getElementById('contactList');
+      if (list.length === 0) {
+        el.innerHTML = `<p style="text-align:center;color:#aaa;padding:28px 0;font-size:14px">
+          連絡先がまだありません<br>
+          <span style="font-size:12px">上の「＋ 連絡先を追加」から登録できます</span>
+        </p>`;
+        return;
+      }
+      el.innerHTML = list.map(c => `
+        <div class="contact-item">
+          <div class="contact-info">
+            <div class="contact-name">${esc(c.name)}</div>
+            <div class="contact-email">${esc(c.email)}</div>
+          </div>
+          <button class="btn-remove" onclick="deleteContact('${c.id}')" title="削除">🗑</button>
+        </div>
+      `).join('');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    renderList();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+  </script>
+</body>
+</html>

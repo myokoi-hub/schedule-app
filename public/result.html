@@ -12,6 +12,7 @@
 <body>
   <header class="header">
     <h1>📅 スケジュール調整</h1>
+    <nav class="header-nav"><a href="/contacts.html">📇 アドレス帳</a></nav>
   </header>
 
   <div class="container">
@@ -23,9 +24,9 @@
         <button class="btn btn-secondary" onclick="copyUrl()">コピー</button>
       </div>
       <div style="margin-top:10px">
-        <a id="mailBtn" href="#" class="btn btn-secondary" style="width:100%;display:flex">
+        <button class="btn btn-secondary" onclick="openMailModal()" style="width:100%;display:flex">
           ✉️ メールで送る
-        </a>
+        </button>
       </div>
     </div>
 
@@ -36,9 +37,40 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- メール送信モーダル -->
+  <div class="modal-overlay" id="mailModal" style="display:none" onclick="overlayClose(event)">
+    <div class="modal">
+      <div class="modal-title">✉️ メールで送る</div>
+
+      <div class="section-label" style="margin-bottom:6px">宛先</div>
+      <div class="email-chip-wrap" id="selectedEmails">
+        <span style="font-size:13px;color:#aaa;align-self:center">下のリストから選んでください</span>
+      </div>
+
+      <input class="contact-search" type="text" id="contactSearch"
+        placeholder="🔍 名前・メアドで検索..." oninput="filterContacts()" autocomplete="off">
+
+      <div class="contact-picker-list" id="contactPickerList"></div>
+
+      <p style="text-align:center;margin-top:10px">
+        <a href="/contacts.html" style="font-size:13px;color:#4A90D9;text-decoration:none">
+          ＋ アドレス帳に連絡先を追加
+        </a>
+      </p>
+
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-primary" onclick="sendMail()" style="flex:1">メールを開く</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('mailModal').style.display='none'">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const params = new URLSearchParams(location.search);
     const eventId = params.get('id');
+
+    // メールデータ（render()後にセット）
+    const mailData = { subject: '', body: '', selected: [] };
 
     async function load() {
       if (!eventId) { showError('URLが正しくありません'); return; }
@@ -60,13 +92,11 @@
       document.getElementById('shareUrl').value = shareUrl;
       document.getElementById('shareCard').style.display = 'block';
 
-      // メール送信リンク
-      const mailSubject = `【出欠確認】${title}`;
-      const mailBody = `${title} の日程調整にご協力をお願いします。\n\n`
+      // メールデータをセット（モーダルで使う）
+      mailData.subject = `【出欠確認】${title}`;
+      mailData.body = `${title} の日程調整にご協力をお願いします。\n\n`
         + `下記のURLから出欠をご入力ください。\n${shareUrl}\n\n`
         + `【候補日程】\n${dates.map(d => `・${d.date_label}`).join('\n')}`;
-      document.getElementById('mailBtn').href =
-        `mailto:?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
 
       // participants & answer map
       const participants = [...new Set(responses.map(r => r.participant_name))];
@@ -142,11 +172,99 @@
       `;
     }
 
+    // ---- URLコピー ----
     function copyUrl() {
       const val = document.getElementById('shareUrl').value;
       navigator.clipboard.writeText(val).then(() => showToast('URLをコピーしました！'));
     }
 
+    // ---- メールモーダル ----
+    function openMailModal() {
+      mailData.selected = [];
+      document.getElementById('contactSearch').value = '';
+      renderSelectedEmails();
+      filterContacts();
+      document.getElementById('mailModal').style.display = 'flex';
+    }
+
+    function overlayClose(e) {
+      if (e.target === document.getElementById('mailModal')) {
+        document.getElementById('mailModal').style.display = 'none';
+      }
+    }
+
+    function getContacts() {
+      return JSON.parse(localStorage.getItem('schedule_contacts') || '[]');
+    }
+
+    function filterContacts() {
+      const q = document.getElementById('contactSearch').value.trim().toLowerCase();
+      const all = getContacts();
+      const list = document.getElementById('contactPickerList');
+
+      if (all.length === 0) {
+        list.innerHTML = `<p style="text-align:center;color:#aaa;padding:18px;font-size:13px">
+          アドレス帳がまだ空です<br>
+          <a href="/contacts.html" style="color:#4A90D9">連絡先を追加する →</a></p>`;
+        return;
+      }
+
+      const filtered = q
+        ? all.filter(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q))
+        : all;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<p style="text-align:center;color:#aaa;padding:14px;font-size:13px">「${esc(q)}」は見つかりません</p>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(c => {
+        const sel = mailData.selected.some(s => s.id === c.id);
+        return `
+          <div class="contact-picker-item${sel ? ' cp-selected' : ''}" onclick="toggleContact('${c.id}')">
+            <div class="contact-check">${sel ? '✓' : ''}</div>
+            <div class="contact-info">
+              <div class="contact-name">${esc(c.name)}</div>
+              <div class="contact-email">${esc(c.email)}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function toggleContact(id) {
+      const contact = getContacts().find(c => c.id === id);
+      if (!contact) return;
+      const idx = mailData.selected.findIndex(s => s.id === id);
+      if (idx >= 0) mailData.selected.splice(idx, 1);
+      else mailData.selected.push(contact);
+      renderSelectedEmails();
+      filterContacts();
+    }
+
+    function renderSelectedEmails() {
+      const wrap = document.getElementById('selectedEmails');
+      if (mailData.selected.length === 0) {
+        wrap.innerHTML = `<span style="font-size:13px;color:#aaa;align-self:center">下のリストから選んでください</span>`;
+        return;
+      }
+      wrap.innerHTML = mailData.selected.map(c => `
+        <span class="email-chip" onclick="toggleContact('${c.id}')" title="${esc(c.email)}">
+          ${esc(c.name)} ×
+        </span>`).join('');
+    }
+
+    function sendMail() {
+      if (mailData.selected.length === 0) {
+        showToast('宛先を1人以上選んでください');
+        return;
+      }
+      const to = mailData.selected.map(c => c.email).join(',');
+      window.location.href =
+        `mailto:${to}?subject=${encodeURIComponent(mailData.subject)}&body=${encodeURIComponent(mailData.body)}`;
+      document.getElementById('mailModal').style.display = 'none';
+    }
+
+    // ---- ユーティリティ ----
     function showError(msg) {
       document.getElementById('mainCard').innerHTML = `<p style="color:#e55;text-align:center;padding:20px">${msg}</p>`;
     }
