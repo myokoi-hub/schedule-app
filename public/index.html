@@ -169,7 +169,7 @@
           <span class="chip-label">${selected[key].label}</span>
           <input class="chip-time-input" type="time"
             value="${selected[key].time}"
-            onchange="selected['${key}'].time=this.value">
+            onchange="selected['${key}'].time=this.value; this.blur()">
           <button class="chip-remove" onclick="removeDate('${key}')">×</button>
         </div>`
       ).join('');
