@@ -30,22 +30,21 @@
 
       <div class="form-group">
         <label>候補日程 <span style="color:#e55">*</span></label>
-        <p class="hint" style="margin-bottom:10px">自由な形式で入力できます（例: 6月1日（月）13:00〜）</p>
-        <div class="date-list" id="dateList">
-          <div class="date-item">
-            <input type="text" placeholder="候補日程 1">
-            <button class="btn-remove" onclick="removeDate(this)" title="削除">×</button>
+        <p class="hint" style="margin-bottom:10px">カレンダーで日付をクリックして選択。時間は右側に入力できます。</p>
+
+        <!-- カレンダー -->
+        <div class="calendar">
+          <div class="cal-header">
+            <button class="cal-nav" onclick="changeMonth(-1)">◀</button>
+            <span id="calTitle"></span>
+            <button class="cal-nav" onclick="changeMonth(1)">▶</button>
           </div>
-          <div class="date-item">
-            <input type="text" placeholder="候補日程 2">
-            <button class="btn-remove" onclick="removeDate(this)" title="削除">×</button>
-          </div>
-          <div class="date-item">
-            <input type="text" placeholder="候補日程 3">
-            <button class="btn-remove" onclick="removeDate(this)" title="削除">×</button>
-          </div>
+          <div class="cal-grid" id="calGrid"></div>
         </div>
-        <button class="btn-add" onclick="addDate()">＋ 日程を追加</button>
+
+        <!-- 選択済み日程 -->
+        <div id="selectedChips" class="selected-chips"></div>
+        <p class="hint" id="noDateHint" style="text-align:center">日付をタップして選択してください</p>
       </div>
 
       <button class="btn btn-primary" onclick="createEvent()">イベントを作成する →</button>
@@ -55,47 +54,110 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    let dateCount = 3;
+    const WEEKDAYS = ['日','月','火','水','木','金','土'];
+    const MONTHS   = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
-    function addDate() {
-      dateCount++;
-      const list = document.getElementById('dateList');
-      const item = document.createElement('div');
-      item.className = 'date-item';
-      item.innerHTML = `
-        <input type="text" placeholder="候補日程 ${dateCount}">
-        <button class="btn-remove" onclick="removeDate(this)" title="削除">×</button>
-      `;
-      list.appendChild(item);
-      item.querySelector('input').focus();
+    let today    = new Date();
+    let curYear  = today.getFullYear();
+    let curMonth = today.getMonth();
+    let selected = {}; // key: "YYYY-MM-DD", value: { label, time }
+
+    function pad(n){ return String(n).padStart(2,'0'); }
+
+    function dateKey(y,m,d){ return `${y}-${pad(m+1)}-${pad(d)}`; }
+
+    function jpLabel(y,m,d){
+      const dt = new Date(y,m,d);
+      return `${m+1}月${d}日（${WEEKDAYS[dt.getDay()]}）`;
     }
 
-    function removeDate(btn) {
-      const list = document.getElementById('dateList');
-      if (list.children.length <= 1) {
-        showToast('日程は1つ以上必要です');
-        return;
+    function renderCalendar(){
+      document.getElementById('calTitle').textContent = `${curYear}年 ${MONTHS[curMonth]}`;
+      const grid = document.getElementById('calGrid');
+      grid.innerHTML = WEEKDAYS.map(w=>`<div class="cal-dow">${w}</div>`).join('');
+
+      const firstDay = new Date(curYear, curMonth, 1).getDay();
+      const daysInMonth = new Date(curYear, curMonth+1, 0).getDate();
+
+      for(let i=0;i<firstDay;i++) grid.insertAdjacentHTML('beforeend','<div class="cal-empty"></div>');
+
+      for(let d=1;d<=daysInMonth;d++){
+        const dt  = new Date(curYear, curMonth, d);
+        const key = dateKey(curYear, curMonth, d);
+        const dow = dt.getDay();
+        const isToday = (dt.toDateString() === today.toDateString());
+        const isPast  = dt < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const isSel   = !!selected[key];
+
+        let cls = 'cal-day';
+        if(dow===0) cls += ' cal-sun';
+        if(dow===6) cls += ' cal-sat';
+        if(isToday) cls += ' cal-today';
+        if(isPast)  cls += ' cal-past';
+        if(isSel)   cls += ' cal-selected';
+
+        const clickAttr = isPast ? '' : `onclick="toggleDate('${key}','${jpLabel(curYear,curMonth,d)}')"`;
+        grid.insertAdjacentHTML('beforeend',`<div class="${cls}" ${clickAttr}>${d}</div>`);
       }
-      btn.parentElement.remove();
     }
 
-    async function createEvent() {
+    function changeMonth(dir){
+      curMonth += dir;
+      if(curMonth < 0){ curMonth=11; curYear--; }
+      if(curMonth > 11){ curMonth=0;  curYear++; }
+      renderCalendar();
+    }
+
+    function toggleDate(key, label){
+      if(selected[key]){
+        delete selected[key];
+      } else {
+        selected[key] = { label, time:'' };
+      }
+      renderCalendar();
+      renderChips();
+    }
+
+    function renderChips(){
+      const keys = Object.keys(selected).sort();
+      const hint = document.getElementById('noDateHint');
+      const container = document.getElementById('selectedChips');
+
+      hint.style.display = keys.length ? 'none' : 'block';
+      container.innerHTML = keys.map(key=>`
+        <div class="chip" id="chip-${key}">
+          <span class="chip-label">${selected[key].label}</span>
+          <input class="chip-time" type="text" placeholder="時間（例: 13:00〜）"
+            value="${selected[key].time}"
+            oninput="selected['${key}'].time=this.value">
+          <button class="chip-remove" onclick="removeDate('${key}')">×</button>
+        </div>
+      `).join('');
+    }
+
+    function removeDate(key){
+      delete selected[key];
+      renderCalendar();
+      renderChips();
+    }
+
+    async function createEvent(){
       const title = document.getElementById('title').value.trim();
       const description = document.getElementById('description').value.trim();
-      const dates = Array.from(document.querySelectorAll('#dateList input'))
-        .map(i => i.value.trim())
-        .filter(v => v);
+      const keys = Object.keys(selected).sort();
 
-      if (!title) { showToast('イベント名を入力してください'); return; }
-      if (dates.length === 0) { showToast('候補日程を1つ以上入力してください'); return; }
+      if(!title){ showToast('イベント名を入力してください'); return; }
+      if(keys.length===0){ showToast('候補日程を1つ以上選択してください'); return; }
 
-      try {
-        const res = await fetch('/api/events', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+      const dates = keys.map(k => selected[k].label + (selected[k].time ? ' ' + selected[k].time : ''));
+
+      try{
+        const res = await fetch('/api/events',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ title, description, dates })
         });
-        if (!res.ok) throw new Error();
+        if(!res.ok) throw new Error();
         const data = await res.json();
         window.location.href = `/result.html?id=${data.id}`;
       } catch {
@@ -103,14 +165,17 @@
       }
     }
 
-    function showToast(msg) {
+    function showToast(msg){
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2500);
+      setTimeout(()=>t.classList.remove('show'), 2500);
     }
 
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+    if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+
+    renderCalendar();
+    renderChips();
   </script>
 </body>
 </html>
