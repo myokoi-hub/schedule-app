@@ -39,8 +39,18 @@
 
       <button class="btn btn-add" id="addBtn" onclick="toggleForm(true)">＋ 連絡先を追加</button>
 
+      <!-- 検索・並び替え -->
+      <div id="searchSortArea" style="margin-top:14px;display:none">
+        <input type="search" class="contact-search" id="searchInput"
+          placeholder="名前・メールアドレスで検索" oninput="renderFiltered()">
+        <div class="sort-tabs">
+          <button class="sort-tab active" id="sortName" onclick="setSort('name')">あいうえお順</button>
+          <button class="sort-tab" id="sortEmail" onclick="setSort('email')">メールアドレス順</button>
+        </div>
+      </div>
+
       <!-- 連絡先リスト -->
-      <div id="contactList" style="margin-top:16px">
+      <div id="contactList" style="margin-top:12px">
         <p style="text-align:center;color:#aaa;padding:20px 0">読み込み中...</p>
       </div>
     </div>
@@ -53,6 +63,54 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    let allContacts = [];
+    let currentSort = 'name';
+
+    function setSort(sort) {
+      currentSort = sort;
+      document.getElementById('sortName').classList.toggle('active', sort === 'name');
+      document.getElementById('sortEmail').classList.toggle('active', sort === 'email');
+      renderFiltered();
+    }
+
+    function renderFiltered() {
+      const el = document.getElementById('contactList');
+      const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+
+      let list = allContacts.filter(c =>
+        c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)
+      );
+
+      if (currentSort === 'name') {
+        list.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+      } else {
+        list.sort((a, b) => a.email.localeCompare(b.email));
+      }
+
+      if (list.length === 0) {
+        el.innerHTML = q
+          ? `<p style="text-align:center;color:#aaa;padding:20px 0;font-size:14px">「${esc(q)}」に一致する連絡先はありません</p>`
+          : `<p style="text-align:center;color:#aaa;padding:28px 0;font-size:14px">
+              連絡先がまだありません<br>
+              <span style="font-size:12px">上の「＋ 連絡先を追加」から登録できます</span>
+             </p>`;
+        return;
+      }
+
+      el.innerHTML = list.map(c => `
+        <div class="contact-item" id="ci-${c.id}">
+          <div class="contact-info">
+            <div class="contact-name">${esc(c.name)}</div>
+            <div class="contact-email">${esc(c.email)}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button class="btn-remove" onclick="showEditForm('${c.id}','${esc(c.name)}','${esc(c.email)}')" title="編集" style="color:#4A90D9">✏️</button>
+            <button class="btn-remove" onclick="deleteContact('${c.id}','${esc(c.name)}')" title="削除">🗑</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
     function toggleForm(show) {
       document.getElementById('addForm').style.display = show ? 'block' : 'none';
       document.getElementById('addBtn').style.display  = show ? 'none'  : 'block';
@@ -144,28 +202,12 @@
       const el = document.getElementById('contactList');
       try {
         const res  = await fetch('/api/contacts');
-        const list = await res.json();
+        allContacts = await res.json();
 
-        if (list.length === 0) {
-          el.innerHTML = `<p style="text-align:center;color:#aaa;padding:28px 0;font-size:14px">
-            連絡先がまだありません<br>
-            <span style="font-size:12px">上の「＋ 連絡先を追加」から登録できます</span>
-          </p>`;
-          return;
-        }
+        const area = document.getElementById('searchSortArea');
+        area.style.display = allContacts.length > 0 ? 'block' : 'none';
 
-        el.innerHTML = list.map(c => `
-          <div class="contact-item" id="ci-${c.id}">
-            <div class="contact-info">
-              <div class="contact-name">${esc(c.name)}</div>
-              <div class="contact-email">${esc(c.email)}</div>
-            </div>
-            <div style="display:flex;gap:6px;flex-shrink:0">
-              <button class="btn-remove" onclick="showEditForm('${c.id}','${esc(c.name)}','${esc(c.email)}')" title="編集" style="color:#4A90D9">✏️</button>
-              <button class="btn-remove" onclick="deleteContact('${c.id}','${esc(c.name)}')" title="削除">🗑</button>
-            </div>
-          </div>
-        `).join('');
+        renderFiltered();
       } catch {
         el.innerHTML = `<p style="text-align:center;color:#e55;padding:20px">読み込みに失敗しました</p>`;
       }
