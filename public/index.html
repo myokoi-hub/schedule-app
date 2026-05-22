@@ -167,12 +167,40 @@
       container.innerHTML = keys.map(key=>`
         <div class="chip" id="chip-${key}">
           <span class="chip-label">${selected[key].label}</span>
-          <input class="chip-time-input" type="time"
-            value="${selected[key].time}"
-            onchange="selected['${key}'].time=this.value; this.blur()">
+          <div class="ctp" id="ctp-${key}">
+            <button class="ctp-btn" onclick="ctpOpen('${key}')">${selected[key].time || '00:00'}</button>
+          </div>
           <button class="chip-remove" onclick="removeDate('${key}')">×</button>
         </div>`
       ).join('');
+    }
+
+    // ---- カスタム時間ピッカー ----
+    function ctpOpen(key) {
+      const wrap = document.getElementById(`ctp-${key}`);
+      const [h, m] = (selected[key].time || '00:00').split(':');
+      const H = Array.from({length:24}, (_,i) => String(i).padStart(2,'0'));
+      const M = Array.from({length:60}, (_,i) => String(i).padStart(2,'0'));
+      wrap.innerHTML =
+        `<select class="ctp-sel" onchange="ctpHour('${key}',this.value)">` +
+        H.map(hh => `<option${hh===h?' selected':''}>${hh}</option>`).join('') +
+        `</select><span class="ctp-colon">:</span>` +
+        `<select class="ctp-sel" onchange="ctpMin('${key}',this.value)">` +
+        M.map(mm => `<option${mm===m?' selected':''}>${mm}</option>`).join('') +
+        `</select>`;
+    }
+
+    function ctpHour(key, val) {
+      const m = (selected[key].time || '00:00').split(':')[1] || '00';
+      selected[key].time = `${val}:${m}`;
+    }
+
+    function ctpMin(key, val) {
+      const h = (selected[key].time || '00:00').split(':')[0] || '00';
+      selected[key].time = `${h}:${val}`;
+      const wrap = document.getElementById(`ctp-${key}`);
+      if (wrap) wrap.innerHTML =
+        `<button class="ctp-btn" onclick="ctpOpen('${key}')">${selected[key].time}</button>`;
     }
 
     function removeDate(key){

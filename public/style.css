@@ -320,6 +320,22 @@ input[type="text"]:focus, textarea:focus {
 }
 .chip-remove:hover { color: #e55; }
 
+/* ===== カスタム時間ピッカー ===== */
+.ctp { display: inline-flex; align-items: center; }
+.ctp-btn {
+  border: none; background: rgba(74,144,217,0.12);
+  color: #4A90D9; font-size: 14px; font-family: inherit;
+  font-weight: bold; cursor: pointer; padding: 3px 10px;
+  border-radius: 6px; transition: background 0.15s; white-space: nowrap;
+}
+.ctp-btn:hover { background: rgba(74,144,217,0.25); }
+.ctp-sel {
+  font-size: 14px; font-family: inherit;
+  border: 1px solid #B3D4F0; border-radius: 6px;
+  padding: 3px 4px; color: #333; background: white; cursor: pointer;
+}
+.ctp-colon { font-weight: bold; color: #555; padding: 0 3px; }
+
 /* ===== ホーム ===== */
 .steps {
   display: flex; align-items: flex-start; gap: 6px; margin-top: 20px;
