@@ -118,21 +118,30 @@
       renderChips();
     }
 
+    // 時間プルダウンの選択肢（8:00〜21:00、30分刻み）
+    const TIME_OPTIONS = ['時間未定'];
+    for(let h=8;h<=21;h++){
+      TIME_OPTIONS.push(`${h}:00〜`);
+      if(h<21) TIME_OPTIONS.push(`${h}:30〜`);
+    }
+
     function renderChips(){
       const keys = Object.keys(selected).sort();
       const hint = document.getElementById('noDateHint');
       const container = document.getElementById('selectedChips');
 
       hint.style.display = keys.length ? 'none' : 'block';
-      container.innerHTML = keys.map(key=>`
-        <div class="chip" id="chip-${key}">
-          <span class="chip-label">${selected[key].label}</span>
-          <input class="chip-time" type="text" placeholder="時間（例: 13:00〜）"
-            value="${selected[key].time}"
-            oninput="selected['${key}'].time=this.value">
-          <button class="chip-remove" onclick="removeDate('${key}')">×</button>
-        </div>
-      `).join('');
+      container.innerHTML = keys.map(key=>{
+        const opts = TIME_OPTIONS.map(t=>
+          `<option value="${t}" ${selected[key].time===t?'selected':''}>${t}</option>`
+        ).join('');
+        return `
+          <div class="chip" id="chip-${key}">
+            <span class="chip-label">${selected[key].label}</span>
+            <select class="chip-select" onchange="selected['${key}'].time=this.value">${opts}</select>
+            <button class="chip-remove" onclick="removeDate('${key}')">×</button>
+          </div>`;
+      }).join('');
     }
 
     function removeDate(key){
