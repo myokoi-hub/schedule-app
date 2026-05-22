@@ -217,6 +217,10 @@
       if(!title){ showToast('イベント名を入力してください'); return; }
       if(keys.length===0){ showToast('候補日程を1つ以上選択してください'); return; }
 
+      const btn = document.querySelector('.btn.btn-primary');
+      btn.disabled = true;
+      btn.textContent = '作成中…';
+
       const dates = keys.map(k => {
         const time = selected[k].time ? ` ${selected[k].time}〜` : '';
         return selected[k].label + time;
@@ -228,11 +232,13 @@
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ title, description, dates })
         });
-        if(!res.ok) throw new Error();
+        if(!res.ok) throw new Error('status:' + res.status);
         const data = await res.json();
         window.location.href = `/result.html?id=${data.id}`;
-      } catch {
-        showToast('エラーが発生しました。もう一度お試しください。');
+      } catch(e) {
+        showToast('エラー: ' + (e.message || 'もう一度お試しください'));
+        btn.disabled = false;
+        btn.textContent = 'イベントを作成する →';
       }
     }
 
