@@ -179,12 +179,23 @@
     }
 
     // ---- メールモーダル ----
-    function openMailModal() {
+    let allContacts = [];  // サーバーから取得した連絡先キャッシュ
+
+    async function openMailModal() {
       mailData.selected = [];
       document.getElementById('contactSearch').value = '';
       renderSelectedEmails();
-      filterContacts();
+      document.getElementById('contactPickerList').innerHTML =
+        '<p style="text-align:center;color:#aaa;padding:14px;font-size:13px">読み込み中...</p>';
       document.getElementById('mailModal').style.display = 'flex';
+
+      try {
+        const res = await fetch('/api/contacts');
+        allContacts = await res.json();
+      } catch {
+        allContacts = [];
+      }
+      filterContacts();
     }
 
     function overlayClose(e) {
@@ -193,16 +204,11 @@
       }
     }
 
-    function getContacts() {
-      return JSON.parse(localStorage.getItem('schedule_contacts') || '[]');
-    }
-
     function filterContacts() {
       const q = document.getElementById('contactSearch').value.trim().toLowerCase();
-      const all = getContacts();
       const list = document.getElementById('contactPickerList');
 
-      if (all.length === 0) {
+      if (allContacts.length === 0) {
         list.innerHTML = `<p style="text-align:center;color:#aaa;padding:18px;font-size:13px">
           アドレス帳がまだ空です<br>
           <a href="/contacts.html" style="color:#4A90D9">連絡先を追加する →</a></p>`;
@@ -210,8 +216,8 @@
       }
 
       const filtered = q
-        ? all.filter(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q))
-        : all;
+        ? allContacts.filter(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q))
+        : allContacts;
 
       if (filtered.length === 0) {
         list.innerHTML = `<p style="text-align:center;color:#aaa;padding:14px;font-size:13px">「${esc(q)}」は見つかりません</p>`;
@@ -232,7 +238,7 @@
     }
 
     function toggleContact(id) {
-      const contact = getContacts().find(c => c.id === id);
+      const contact = allContacts.find(c => c.id === id);
       if (!contact) return;
       const idx = mailData.selected.findIndex(s => s.id === id);
       if (idx >= 0) mailData.selected.splice(idx, 1);

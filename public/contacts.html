@@ -32,7 +32,7 @@
             onkeydown="if(event.key==='Enter')saveContact()">
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-primary" onclick="saveContact()" style="flex:1">保存</button>
+          <button class="btn btn-primary" id="saveBtn" onclick="saveContact()" style="flex:1">保存</button>
           <button class="btn btn-secondary" onclick="toggleForm(false)">キャンセル</button>
         </div>
       </div>
@@ -40,24 +40,19 @@
       <button class="btn btn-add" id="addBtn" onclick="toggleForm(true)">＋ 連絡先を追加</button>
 
       <!-- 連絡先リスト -->
-      <div id="contactList" style="margin-top:16px"></div>
+      <div id="contactList" style="margin-top:16px">
+        <p style="text-align:center;color:#aaa;padding:20px 0">読み込み中...</p>
+      </div>
     </div>
 
     <p class="hint" style="text-align:center;margin-top:-8px">
-      登録した連絡先は、このスマホ・PCにのみ保存されます
+      登録した連絡先はアプリを使う全員で共有されます
     </p>
   </div>
 
   <div class="toast" id="toast"></div>
 
   <script>
-    function getContacts() {
-      return JSON.parse(localStorage.getItem('schedule_contacts') || '[]');
-    }
-    function saveContacts(list) {
-      localStorage.setItem('schedule_contacts', JSON.stringify(list));
-    }
-
     function toggleForm(show) {
       document.getElementById('addForm').style.display = show ? 'block' : 'none';
       document.getElementById('addBtn').style.display  = show ? 'none'  : 'block';
@@ -68,51 +63,72 @@
       }
     }
 
-    function saveContact() {
+    async function saveContact() {
       const name  = document.getElementById('newName').value.trim();
       const email = document.getElementById('newEmail').value.trim();
       if (!name)  { showToast('名前を入力してください'); return; }
       if (!email || !email.includes('@')) { showToast('正しいメールアドレスを入力してください'); return; }
 
-      const list = getContacts();
-      // 重複チェック
-      if (list.some(c => c.email.toLowerCase() === email.toLowerCase())) {
-        showToast('そのメールアドレスはすでに登録されています'); return;
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.textContent = '保存中…';
+
+      try {
+        const res = await fetch('/api/contacts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email })
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast(data.error || 'エラーが発生しました'); return; }
+        toggleForm(false);
+        showToast('追加しました！');
+        renderList();
+      } catch {
+        showToast('通信エラーが発生しました');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '保存';
       }
-      list.push({ id: Date.now().toString(), name, email });
-      list.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
-      saveContacts(list);
-      toggleForm(false);
-      renderList();
-      showToast('追加しました！');
     }
 
-    function deleteContact(id) {
-      if (!confirm('この連絡先を削除しますか？')) return;
-      saveContacts(getContacts().filter(c => c.id !== id));
-      renderList();
-      showToast('削除しました');
+    async function deleteContact(id, name) {
+      if (!confirm(`「${name}」を削除しますか？`)) return;
+      try {
+        await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+        showToast('削除しました');
+        renderList();
+      } catch {
+        showToast('通信エラーが発生しました');
+      }
     }
 
-    function renderList() {
-      const list = getContacts();
-      const el   = document.getElementById('contactList');
-      if (list.length === 0) {
-        el.innerHTML = `<p style="text-align:center;color:#aaa;padding:28px 0;font-size:14px">
-          連絡先がまだありません<br>
-          <span style="font-size:12px">上の「＋ 連絡先を追加」から登録できます</span>
-        </p>`;
-        return;
-      }
-      el.innerHTML = list.map(c => `
-        <div class="contact-item">
-          <div class="contact-info">
-            <div class="contact-name">${esc(c.name)}</div>
-            <div class="contact-email">${esc(c.email)}</div>
+    async function renderList() {
+      const el = document.getElementById('contactList');
+      try {
+        const res  = await fetch('/api/contacts');
+        const list = await res.json();
+
+        if (list.length === 0) {
+          el.innerHTML = `<p style="text-align:center;color:#aaa;padding:28px 0;font-size:14px">
+            連絡先がまだありません<br>
+            <span style="font-size:12px">上の「＋ 連絡先を追加」から登録できます</span>
+          </p>`;
+          return;
+        }
+
+        el.innerHTML = list.map(c => `
+          <div class="contact-item">
+            <div class="contact-info">
+              <div class="contact-name">${esc(c.name)}</div>
+              <div class="contact-email">${esc(c.email)}</div>
+            </div>
+            <button class="btn-remove" onclick="deleteContact('${c.id}','${esc(c.name)}')" title="削除">🗑</button>
           </div>
-          <button class="btn-remove" onclick="deleteContact('${c.id}')" title="削除">🗑</button>
-        </div>
-      `).join('');
+        `).join('');
+      } catch {
+        el.innerHTML = `<p style="text-align:center;color:#e55;padding:20px">読み込みに失敗しました</p>`;
+      }
     }
 
     function showToast(msg) {

@@ -19,6 +19,14 @@ if (process.env.DATABASE_URL) {
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `).catch(err => console.error('DB init error:', err));
+  pgPool.query(`
+    CREATE TABLE IF NOT EXISTS contacts (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `).catch(err => console.error('DB contacts init error:', err));
 }
 
 async function getEvent(id) {
@@ -44,7 +52,41 @@ async function saveEvent(event) {
 
 function readLocalData() {
   try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
-  catch { return { events: {} }; }
+  catch { return { events: {}, contacts: [] }; }
+}
+
+async function getContacts() {
+  if (pgPool) {
+    const r = await pgPool.query('SELECT id, name, email FROM contacts ORDER BY name');
+    return r.rows;
+  }
+  const data = readLocalData();
+  return data.contacts || [];
+}
+
+async function addContact(contact) {
+  if (pgPool) {
+    await pgPool.query(
+      'INSERT INTO contacts (id, name, email) VALUES ($1, $2, $3)',
+      [contact.id, contact.name, contact.email]
+    );
+    return;
+  }
+  const data = readLocalData();
+  if (!data.contacts) data.contacts = [];
+  data.contacts.push(contact);
+  data.contacts.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+  writeLocalData(data);
+}
+
+async function removeContact(id) {
+  if (pgPool) {
+    await pgPool.query('DELETE FROM contacts WHERE id = $1', [id]);
+    return;
+  }
+  const data = readLocalData();
+  data.contacts = (data.contacts || []).filter(c => c.id !== id);
+  writeLocalData(data);
 }
 
 function writeLocalData(data) {
@@ -117,6 +159,29 @@ app.get('/api/events/:id/results', async (req, res) => {
   });
 
   res.json({ id: event.id, title: event.title, description: event.description, dates, responses });
+});
+
+// ---- 連絡先API ----
+app.get('/api/contacts', async (req, res) => {
+  const contacts = await getContacts();
+  res.json(contacts);
+});
+
+app.post('/api/contacts', async (req, res) => {
+  const { name, email } = req.body;
+  if (!name || !email) return res.status(400).json({ error: '名前とメールアドレスは必須です' });
+  const contacts = await getContacts();
+  if (contacts.some(c => c.email.toLowerCase() === email.toLowerCase())) {
+    return res.status(409).json({ error: 'そのメールアドレスはすでに登録されています' });
+  }
+  const contact = { id: crypto.randomBytes(4).toString('hex'), name, email };
+  await addContact(contact);
+  res.json(contact);
+});
+
+app.delete('/api/contacts/:id', async (req, res) => {
+  await removeContact(req.params.id);
+  res.json({ success: true });
 });
 
 function getLocalIP() {
