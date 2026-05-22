@@ -17,7 +17,7 @@ body {
 
 .header h1 { font-size: 20px; }
 
-.container { max-width: 720px; margin: 32px auto; padding: 0 16px; }
+.container { max-width: 720px; margin: 32px auto; padding: 0 16px 80px; }
 
 .card {
   background: white;
