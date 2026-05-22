@@ -86,7 +86,7 @@
         <p class="hint" id="noDateHint" style="text-align:center">日付をタップして選択してください</p>
       </div>
 
-      <button class="btn btn-primary" onclick="createEvent()">イベントを作成する →</button>
+      <button class="btn btn-primary" id="createBtn">イベントを作成する →</button>
     </div>
 
   </div>
@@ -250,6 +250,10 @@
     }
 
     if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+
+    const createBtn = document.getElementById('createBtn');
+    createBtn.addEventListener('click', createEvent);
+    createBtn.addEventListener('touchend', function(e){ e.preventDefault(); createEvent(); });
 
     renderCalendar();
     renderChips();
