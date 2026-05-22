@@ -92,6 +92,43 @@
       }
     }
 
+    function showEditForm(id, name, email) {
+      const item = document.getElementById(`ci-${id}`);
+      item.innerHTML = `
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+          <input type="text" id="en-${id}" value="${esc(name)}"
+            placeholder="名前" style="font-size:14px;padding:6px 10px;border:1px solid #B3D4F0;border-radius:6px;font-family:inherit">
+          <input type="email" id="ee-${id}" value="${esc(email)}"
+            placeholder="メールアドレス" style="font-size:14px;padding:6px 10px;border:1px solid #B3D4F0;border-radius:6px;font-family:inherit">
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" onclick="saveEdit('${id}')"
+              style="flex:1;padding:8px;font-size:13px">保存</button>
+            <button class="btn btn-secondary" onclick="renderList()"
+              style="font-size:13px;padding:8px 14px">キャンセル</button>
+          </div>
+        </div>`;
+    }
+
+    async function saveEdit(id) {
+      const name  = document.getElementById(`en-${id}`).value.trim();
+      const email = document.getElementById(`ee-${id}`).value.trim();
+      if (!name)  { showToast('名前を入力してください'); return; }
+      if (!email || !email.includes('@')) { showToast('正しいメールアドレスを入力してください'); return; }
+      try {
+        const res = await fetch(`/api/contacts/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email })
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast(data.error || 'エラーが発生しました'); return; }
+        showToast('更新しました！');
+        renderList();
+      } catch {
+        showToast('通信エラーが発生しました');
+      }
+    }
+
     async function deleteContact(id, name) {
       if (!confirm(`「${name}」を削除しますか？`)) return;
       try {
@@ -118,12 +155,15 @@
         }
 
         el.innerHTML = list.map(c => `
-          <div class="contact-item">
+          <div class="contact-item" id="ci-${c.id}">
             <div class="contact-info">
               <div class="contact-name">${esc(c.name)}</div>
               <div class="contact-email">${esc(c.email)}</div>
             </div>
-            <button class="btn-remove" onclick="deleteContact('${c.id}','${esc(c.name)}')" title="削除">🗑</button>
+            <div style="display:flex;gap:6px;flex-shrink:0">
+              <button class="btn-remove" onclick="showEditForm('${c.id}','${esc(c.name)}','${esc(c.email)}')" title="編集" style="color:#4A90D9">✏️</button>
+              <button class="btn-remove" onclick="deleteContact('${c.id}','${esc(c.name)}')" title="削除">🗑</button>
+            </div>
           </div>
         `).join('');
       } catch {

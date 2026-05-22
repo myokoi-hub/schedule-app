@@ -79,6 +79,24 @@ async function addContact(contact) {
   writeLocalData(data);
 }
 
+async function updateContact(id, name, email) {
+  if (pgPool) {
+    await pgPool.query(
+      'UPDATE contacts SET name = $1, email = $2 WHERE id = $3',
+      [name, email, id]
+    );
+    return;
+  }
+  const data = readLocalData();
+  const contact = (data.contacts || []).find(c => c.id === id);
+  if (contact) {
+    contact.name = name;
+    contact.email = email;
+    data.contacts.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    writeLocalData(data);
+  }
+}
+
 async function removeContact(id) {
   if (pgPool) {
     await pgPool.query('DELETE FROM contacts WHERE id = $1', [id]);
@@ -177,6 +195,17 @@ app.post('/api/contacts', async (req, res) => {
   const contact = { id: crypto.randomBytes(4).toString('hex'), name, email };
   await addContact(contact);
   res.json(contact);
+});
+
+app.put('/api/contacts/:id', async (req, res) => {
+  const { name, email } = req.body;
+  if (!name || !email) return res.status(400).json({ error: '名前とメールアドレスは必須です' });
+  const contacts = await getContacts();
+  if (contacts.some(c => c.email.toLowerCase() === email.toLowerCase() && c.id !== req.params.id)) {
+    return res.status(409).json({ error: 'そのメールアドレスはすでに登録されています' });
+  }
+  await updateContact(req.params.id, name, email);
+  res.json({ success: true });
 });
 
 app.delete('/api/contacts/:id', async (req, res) => {
