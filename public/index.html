@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>スケジュール調整 - 新規作成</title>
+  <title>スケジュール調整</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#4A90D9">
@@ -16,8 +16,46 @@
   </header>
 
   <div class="container">
+
+    <!-- ① ヒーロー：使い方3ステップ -->
+    <div class="card" style="text-align:center">
+      <p style="font-size:20px;font-weight:bold;color:#333;margin-bottom:6px">日程調整を、かんたんに。</p>
+      <p style="font-size:13px;color:#999;margin-bottom:0">候補日を選んで参加者にURLを送るだけで出欠が集まります</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">①</div>
+          <div class="step-label">イベント作成</div>
+          <div class="step-desc">候補日程を<br>カレンダーで選ぶ</div>
+        </div>
+        <div class="step-arrow">›</div>
+        <div class="step">
+          <div class="step-num">②</div>
+          <div class="step-label">URLを共有</div>
+          <div class="step-desc">メールや<br>LINEで送る</div>
+        </div>
+        <div class="step-arrow">›</div>
+        <div class="step">
+          <div class="step-num">③</div>
+          <div class="step-label">結果を確認</div>
+          <div class="step-desc">○△×の回答を<br>一覧で見る</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② アドレス帳へのクイックリンク -->
+    <a href="/contacts.html" class="card home-link-card">
+      <span style="font-size:32px;line-height:1">📇</span>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:bold;color:#4A90D9;margin-bottom:2px">アドレス帳</div>
+        <div class="hint" style="margin:0">メールの宛先を管理・共有できます</div>
+      </div>
+      <span style="font-size:20px;color:#B3D4F0;font-weight:bold">›</span>
+    </a>
+
+    <!-- ③ イベント作成フォーム -->
     <div class="card">
-      <div class="card-title">イベントを作成する</div>
+      <div class="card-title">📅 新しいイベントを作成する</div>
 
       <div class="form-group">
         <label>イベント名 <span style="color:#e55">*</span></label>
@@ -50,6 +88,7 @@
 
       <button class="btn btn-primary" onclick="createEvent()">イベントを作成する →</button>
     </div>
+
   </div>
 
   <div class="toast" id="toast"></div>

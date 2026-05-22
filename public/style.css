@@ -320,6 +320,28 @@ input[type="text"]:focus, textarea:focus {
 }
 .chip-remove:hover { color: #e55; }
 
+/* ===== ホーム ===== */
+.steps {
+  display: flex; align-items: flex-start; gap: 6px; margin-top: 20px;
+}
+.step { flex: 1; text-align: center; }
+.step-num {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #4A90D9; color: white;
+  font-size: 14px; font-weight: bold;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 6px;
+}
+.step-label { font-size: 13px; font-weight: bold; color: #333; margin-bottom: 3px; }
+.step-desc  { font-size: 11px; color: #999; line-height: 1.5; }
+.step-arrow { font-size: 20px; color: #ccc; margin-top: 6px; flex-shrink: 0; }
+
+.home-link-card {
+  display: flex; align-items: center; gap: 14px;
+  text-decoration: none; transition: box-shadow 0.15s;
+}
+.home-link-card:hover { box-shadow: 0 4px 16px rgba(74,144,217,0.18); }
+
 /* ===== ヘッダーナビ ===== */
 .header { position: relative; }
 .header-nav { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
