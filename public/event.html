@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>スケジュール調整 - 回答</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4A90D9">
+  <link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 <body>
   <header class="header">
@@ -131,6 +134,7 @@
     }
 
     load();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
   </script>
 </body>
 </html>
