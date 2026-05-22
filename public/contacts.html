@@ -65,6 +65,7 @@
   <script>
     let allContacts = [];
     let currentSort = 'name';
+    let displayList = [];
 
     function setSort(sort) {
       currentSort = sort;
@@ -74,20 +75,36 @@
     }
 
     function renderFiltered() {
-      const el = document.getElementById('contactList');
       const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
 
-      let list = allContacts.filter(c =>
+      displayList = allContacts.filter(c =>
         c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)
       );
 
       if (currentSort === 'name') {
-        list.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+        displayList.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
       } else {
-        list.sort((a, b) => a.email.localeCompare(b.email));
+        displayList.sort((a, b) => a.email.localeCompare(b.email));
       }
 
-      if (list.length === 0) {
+      renderFromDisplay();
+    }
+
+    function moveItem(id, dir) {
+      const idx = displayList.findIndex(c => c.id === id);
+      if (idx === -1) return;
+      const target = idx + dir;
+      if (target < 0 || target >= displayList.length) return;
+      [displayList[idx], displayList[target]] = [displayList[target], displayList[idx]];
+      renderFromDisplay();
+    }
+
+    function renderFromDisplay() {
+      const el = document.getElementById('contactList');
+      const len = displayList.length;
+
+      if (len === 0) {
+        const q = (document.getElementById('searchInput')?.value || '').trim();
         el.innerHTML = q
           ? `<p style="text-align:center;color:#aaa;padding:20px 0;font-size:14px">「${esc(q)}」に一致する連絡先はありません</p>`
           : `<p style="text-align:center;color:#aaa;padding:28px 0;font-size:14px">
@@ -97,13 +114,17 @@
         return;
       }
 
-      el.innerHTML = list.map(c => `
+      el.innerHTML = displayList.map((c, i) => `
         <div class="contact-item" id="ci-${c.id}">
           <div class="contact-info">
             <div class="contact-name">${esc(c.name)}</div>
             <div class="contact-email">${esc(c.email)}</div>
           </div>
-          <div style="display:flex;gap:6px;flex-shrink:0">
+          <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <button class="btn-move" onclick="moveItem('${c.id}',-1)" ${i === 0 ? 'disabled' : ''}>↑</button>
+              <button class="btn-move" onclick="moveItem('${c.id}',1)" ${i === len - 1 ? 'disabled' : ''}>↓</button>
+            </div>
             <button class="btn-remove" onclick="showEditForm('${c.id}','${esc(c.name)}','${esc(c.email)}')" title="編集" style="color:#4A90D9">✏️</button>
             <button class="btn-remove" onclick="deleteContact('${c.id}','${esc(c.name)}')" title="削除">🗑</button>
           </div>
