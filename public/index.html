@@ -251,6 +251,9 @@
         });
         if(!res.ok) throw new Error('status:' + res.status);
         const data = await res.json();
+        const myEvents = JSON.parse(localStorage.getItem('myEvents') || '[]');
+        myEvents.push(data.id);
+        localStorage.setItem('myEvents', JSON.stringify(myEvents));
         window.location.href = `/result.html?id=${data.id}`;
       } catch(e) {
         showToast('エラー: ' + (e.message || 'もう一度お試しください'));
