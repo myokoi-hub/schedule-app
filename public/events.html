@@ -45,7 +45,6 @@
           return;
         }
 
-        const myEvents = JSON.parse(localStorage.getItem('myEvents') || '[]');
         el.innerHTML = events.map(e => {
           const date = new Date(e.created_at);
           const dateStr = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}`;
@@ -74,11 +73,10 @@
                   ${okBadge}
                 </div>
               </a>
-              ${myEvents.includes(e.id) ? `
               <div style="display:flex;gap:4px;flex-shrink:0;margin-left:8px;padding-top:2px">
                 <button class="btn-move" onclick="showEventEdit('${e.id}','${esc(e.title)}','${esc(e.description||'')}','${e.deadline||''}')" title="編集" style="width:30px;height:30px;color:#5BAD4A">✏️</button>
                 <button class="btn-move" onclick="deleteEvent('${e.id}','${esc(e.title)}')" title="削除" style="width:30px;height:30px;color:#e55">🗑</button>
-              </div>` : ''}
+              </div>
             </div>`;
         }).join('');
       } catch {
