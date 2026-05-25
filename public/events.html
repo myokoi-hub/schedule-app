@@ -48,27 +48,107 @@
         el.innerHTML = events.map(e => {
           const date = new Date(e.created_at);
           const dateStr = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}`;
+          const deadlineStr = e.deadline
+            ? (() => {
+                const d = new Date(e.deadline + 'T23:59:59');
+                const diff = Math.ceil((d - new Date()) / (1000*60*60*24));
+                const label = `${d.getMonth()+1}/${d.getDate()}`;
+                if (diff < 0) return `<span style="color:#e55;font-size:12px">⏰ 締切済(${label})</span>`;
+                if (diff === 0) return `<span style="color:#F57C00;font-size:12px">⏰ 本日締切</span>`;
+                return `<span style="color:#4A90D9;font-size:12px">⏰ 締切${label}(残${diff}日)</span>`;
+              })()
+            : '';
           const okBadge = e.best_ok > 0
-            ? `<span style="background:#E8F5E9;color:#388E3C;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:bold">○最大 ${e.best_ok}人</span>`
+            ? `<span style="background:#E8F5E9;color:#388E3C;border-radius:20px;padding:2px 8px;font-size:12px;font-weight:bold">○最大 ${e.best_ok}人</span>`
             : '';
           return `
-            <a href="/result.html?id=${e.id}" class="event-list-item">
-              <div style="flex:1;min-width:0">
+            <div class="event-list-item" id="eli-${e.id}" style="align-items:flex-start">
+              <a href="/result.html?id=${e.id}" style="flex:1;min-width:0;text-decoration:none;color:inherit">
                 <div class="event-list-title">${esc(e.title)}</div>
-                <div class="event-list-meta">
-                  作成: ${dateStr}　候補: ${e.date_count}日程
-                  ${e.invited_count > 0
-                    ? `${e.invited_count}名中 ${e.response_count}名 回答`
-                    : `回答: ${e.response_count}名`}
+                <div class="event-list-meta" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:3px">
+                  <span>作成: ${dateStr}</span>
+                  <span>候補: ${e.date_count}日程</span>
+                  <span>${e.invited_count > 0 ? `${e.invited_count}名中 ${e.response_count}名 回答` : `回答: ${e.response_count}名`}</span>
+                  ${deadlineStr}
+                  ${okBadge}
                 </div>
-                <div style="margin-top:4px">${okBadge}</div>
+              </a>
+              <div style="display:flex;gap:4px;flex-shrink:0;margin-left:8px;padding-top:2px">
+                <button class="btn-move" onclick="showEventEdit('${e.id}','${esc(e.title)}','${esc(e.description||'')}','${e.deadline||''}')" title="編集" style="width:30px;height:30px;color:#4A90D9">✏️</button>
+                <button class="btn-move" onclick="deleteEvent('${e.id}','${esc(e.title)}')" title="削除" style="width:30px;height:30px;color:#e55">🗑</button>
               </div>
-              <span style="font-size:20px;color:#B3D4F0;font-weight:bold;flex-shrink:0;align-self:center">›</span>
-            </a>`;
+            </div>`;
         }).join('');
       } catch {
         el.innerHTML = `<p style="text-align:center;color:#e55;padding:20px">読み込みに失敗しました</p>`;
       }
+    }
+
+    function showEventEdit(id, title, desc, deadline) {
+      const item = document.getElementById(`eli-${id}`);
+      item.innerHTML = `
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+          <div class="form-group" style="margin-bottom:0">
+            <label style="font-size:12px;color:#888">イベント名 <span style="color:#e55">*</span></label>
+            <input type="text" id="et-${id}" value="${esc(title)}"
+              style="font-size:14px;padding:6px 10px;border:1px solid #B3D4F0;border-radius:6px;font-family:inherit;width:100%;box-sizing:border-box">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label style="font-size:12px;color:#888">メモ</label>
+            <textarea id="ed-${id}" rows="2"
+              style="font-size:14px;padding:6px 10px;border:1px solid #B3D4F0;border-radius:6px;font-family:inherit;width:100%;box-sizing:border-box;resize:vertical">${esc(desc)}</textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label style="font-size:12px;color:#888">回答締切日 <span style="color:#e55">*</span></label>
+            <input type="date" id="edl-${id}" value="${deadline}" required
+              style="font-size:14px;padding:6px 10px;border:1px solid #B3D4F0;border-radius:6px;font-family:inherit;width:100%;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" onclick="saveEventEdit('${id}')"
+              style="flex:1;padding:8px;font-size:13px">保存</button>
+            <button class="btn btn-secondary" onclick="load()"
+              style="font-size:13px;padding:8px 14px">キャンセル</button>
+          </div>
+        </div>`;
+    }
+
+    async function saveEventEdit(id) {
+      const title = document.getElementById(`et-${id}`).value.trim();
+      const desc  = document.getElementById(`ed-${id}`).value.trim();
+      const deadline = document.getElementById(`edl-${id}`).value;
+      if (!title)    { showToast('イベント名を入力してください'); return; }
+      if (!deadline) { showToast('締切日を入力してください'); return; }
+      try {
+        const res = await fetch(`/api/events/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description: desc, deadline })
+        });
+        if (!res.ok) throw new Error();
+        showToast('更新しました！');
+        load();
+      } catch {
+        showToast('エラーが発生しました');
+      }
+    }
+
+    async function deleteEvent(id, title) {
+      if (!confirm(`「${title}」を削除しますか？\nこの操作は取り消せません。`)) return;
+      try {
+        const res = await fetch(`/api/events/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error();
+        showToast('削除しました');
+        load();
+      } catch {
+        showToast('エラーが発生しました');
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
     }
 
     function esc(s) {

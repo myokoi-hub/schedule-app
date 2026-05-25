@@ -141,6 +141,8 @@ app.get('/api/events', async (req, res) => {
     return {
       id: e.id,
       title: e.title,
+      description: e.description || '',
+      deadline: e.deadline || null,
       created_at: e.db_created_at || e.created_at,
       date_count: e.dates.length,
       response_count: responsers.length,
@@ -224,6 +226,30 @@ app.get('/api/events/:id/results', async (req, res) => {
     responses,
     invited_count: (event.invited || []).length
   });
+});
+
+app.put('/api/events/:id', async (req, res) => {
+  const { title, description, deadline } = req.body;
+  if (!title) return res.status(400).json({ error: 'タイトルは必須です' });
+  if (!deadline) return res.status(400).json({ error: '締切日は必須です' });
+  const event = await getEvent(req.params.id);
+  if (!event) return res.status(404).json({ error: 'イベントが見つかりません' });
+  event.title = title;
+  event.description = description || '';
+  event.deadline = deadline;
+  await saveEvent(event);
+  res.json({ success: true });
+});
+
+app.delete('/api/events/:id', async (req, res) => {
+  if (pgPool) {
+    await pgPool.query('DELETE FROM events WHERE id = $1', [req.params.id]);
+  } else {
+    const data = readLocalData();
+    delete data.events[req.params.id];
+    writeLocalData(data);
+  }
+  res.json({ success: true });
 });
 
 app.post('/api/events/:id/decide', async (req, res) => {

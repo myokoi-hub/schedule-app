@@ -77,8 +77,8 @@
       </div>
 
       <div class="form-group">
-        <label>回答締切日（任意）</label>
-        <input type="date" id="deadline" style="width:100%;padding:10px 13px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;background:#FAFAFA;box-sizing:border-box">
+        <label>回答締切日 <span style="color:#e55">*</span></label>
+        <input type="date" id="deadline" required style="width:100%;padding:10px 13px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;background:#FAFAFA;box-sizing:border-box">
       </div>
 
       <div class="form-group">
@@ -229,6 +229,7 @@
       const keys = Object.keys(selected).sort();
 
       if(!title){ showToast('イベント名を入力してください'); return; }
+      if(!deadline){ showToast('回答締切日を入力してください'); return; }
       if(keys.length===0){ showToast('候補日程を1つ以上選択してください'); return; }
 
       const btn = document.querySelector('.btn.btn-primary');
