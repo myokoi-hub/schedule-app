@@ -226,6 +226,7 @@
     async function createEvent(){
       const title = document.getElementById('title').value.trim();
       const description = document.getElementById('description').value.trim();
+      const deadline = document.getElementById('deadline').value || null;
       const keys = Object.keys(selected).sort();
 
       if(!title){ showToast('イベント名を入力してください'); return; }
@@ -240,8 +241,6 @@
         const time = selected[k].time ? ` ${selected[k].time}〜` : '';
         return selected[k].label + time;
       });
-
-      const deadline = document.getElementById('deadline').value || null;
 
       try{
         const res = await fetch('/api/events',{
