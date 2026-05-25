@@ -1,6 +1,6 @@
 {
   "name": "スケジュール調整",
-  "short_name": "予定調整",
+  "short_name": "日程調整",
   "description": "チームのスケジュールをかんたんに調整できるアプリ",
   "start_url": "/",
   "display": "standalone",
