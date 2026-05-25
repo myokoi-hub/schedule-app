@@ -48,14 +48,18 @@
       </div>
 
       <input class="contact-search" type="text" id="contactSearch"
-        placeholder="🔍 名前・メアドで検索..." oninput="filterContacts()" autocomplete="off">
+        placeholder="🔍 名前・メアドで検索..." oninput="onModalSearchInput()" autocomplete="off">
 
-      <div class="sort-tabs" style="margin-bottom:8px">
-        <button class="sort-tab active" id="modalSortName" onclick="setModalSort('name')">あいうえお順</button>
-        <button class="sort-tab" id="modalSortEmail" onclick="setModalSort('email')">メールアドレス順</button>
+      <button class="btn btn-secondary" id="modalToggleBtn" onclick="toggleModalList()"
+        style="width:100%;margin:4px 0 0">一覧を表示 ▼</button>
+
+      <div id="modalListArea" style="display:none;margin-top:8px">
+        <div class="sort-tabs" style="margin-bottom:8px">
+          <button class="sort-tab active" id="modalSortName" onclick="setModalSort('name')">あいうえお順</button>
+          <button class="sort-tab" id="modalSortEmail" onclick="setModalSort('email')">メールアドレス順</button>
+        </div>
+        <div class="contact-picker-list" id="contactPickerList"></div>
       </div>
-
-      <div class="contact-picker-list" id="contactPickerList"></div>
 
       <p style="text-align:center;margin-top:10px">
         <a href="/contacts.html" style="font-size:13px;color:#4A90D9;text-decoration:none">
@@ -230,8 +234,28 @@
       filterContacts();
     }
 
+    let modalListVisible = false;
+
+    function toggleModalList() {
+      modalListVisible = !modalListVisible;
+      document.getElementById('modalListArea').style.display = modalListVisible ? 'block' : 'none';
+      document.getElementById('modalToggleBtn').textContent = modalListVisible ? '一覧を隠す ▲' : '一覧を表示 ▼';
+    }
+
+    function onModalSearchInput() {
+      if (!modalListVisible) {
+        modalListVisible = true;
+        document.getElementById('modalListArea').style.display = 'block';
+        document.getElementById('modalToggleBtn').textContent = '一覧を隠す ▲';
+      }
+      filterContacts();
+    }
+
     async function openMailModal() {
       mailData.selected = [];
+      modalListVisible = false;
+      document.getElementById('modalListArea').style.display = 'none';
+      document.getElementById('modalToggleBtn').textContent = '一覧を表示 ▼';
       document.getElementById('contactSearch').value = '';
       renderSelectedEmails();
       document.getElementById('contactPickerList').innerHTML =
@@ -244,7 +268,6 @@
       } catch {
         allContacts = [];
       }
-      filterContacts();
     }
 
     function overlayClose(e) {
