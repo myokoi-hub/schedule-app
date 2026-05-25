@@ -374,10 +374,10 @@ input[type="text"]:focus, textarea:focus {
 .header-nav a:hover { background: rgba(255,255,255,0.2); }
 
 @media (max-width: 480px) {
-  .header { padding: 10px 16px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  .header h1 { font-size: 17px; }
+  .header { padding: 12px 12px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; text-align: left; }
+  .header h1 { font-size: 16px; }
   .header-nav { position: static; transform: none; }
-  .header-nav a { font-size: 12px; padding: 3px 8px; }
+  .header-nav a { font-size: 12px; padding: 4px 8px; }
 }
 
 /* ===== モーダル ===== */
