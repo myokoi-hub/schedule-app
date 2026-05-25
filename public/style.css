@@ -218,10 +218,10 @@ input[type="text"]:focus, textarea:focus {
 .avail-btn.selected-batsu  { background: #E63946; border-color: #E63946; color: white; }
 
 /* Mark colors */
-.m-maru    { color: #2E86AB; font-weight: bold; }
-.m-sankaku { color: #F4A261; font-weight: bold; }
-.m-batsu   { color: #E63946; font-weight: bold; }
-.m-none    { color: #ccc; }
+.m-maru    { color: #2E86AB; font-weight: 900; font-size: 20px; }
+.m-sankaku { color: #F4A261; font-weight: 900; font-size: 20px; }
+.m-batsu   { color: #E63946; font-weight: 900; font-size: 20px; }
+.m-none    { color: #ddd; font-size: 20px; }
 
 /* Toast */
 .toast {
