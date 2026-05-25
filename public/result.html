@@ -218,12 +218,12 @@
         }
       }
 
-      // 決定日バナー
+      // 確定日バナー
       let decidedBanner = '';
       if (decided_date_id != null) {
         const decidedDate = dates.find(d => d.id == decided_date_id);
         if (decidedDate) {
-          decidedBanner = `<div class="decided-banner">✅ 決定日: ${esc(decidedDate.date_label)}</div>`;
+          decidedBanner = `<div class="decided-banner">✅ 確定日: ${esc(decidedDate.date_label)}</div>`;
         }
       }
 
@@ -254,7 +254,7 @@
           recommendHtml = `
             <div style="margin-top:20px">
               <div class="section-label" style="margin-bottom:10px">🏆 推奨候補日（参加率順）</div>
-              <p class="hint" style="margin-bottom:8px">ボタンを押すと決定日になります</p>
+              <p class="hint" style="margin-bottom:8px">ボタンを押すと確定日になります</p>
               ${btnHtml}
             </div>`;
         }
@@ -289,12 +289,12 @@
       `;
     }
 
-    // ---- 決定日 ----
+    // ---- 確定日 ----
     async function decideDate(dateId, dateLabel) {
       const isCancel = dateId == currentDecidedId;
       const msg = isCancel
         ? `「${dateLabel}」の決定を取り消しますか？`
-        : `「${dateLabel}」を決定日にしますか？`;
+        : `「${dateLabel}」を確定日にしますか？`;
       if (!confirm(msg)) return;
       try {
         const res = await fetch(`/api/events/${eventId}/decide`, {

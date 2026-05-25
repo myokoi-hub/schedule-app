@@ -508,7 +508,7 @@ input[type="text"]:focus, textarea:focus {
 .deadline-badge.expired { background: #FFF3F3; color: #e55; }
 .deadline-badge.today { background: #FFF8E1; color: #F57C00; }
 
-/* 決定日バナー */
+/* 確定日バナー */
 .decided-banner {
   background: #E8F5E9; color: #2E7D32; border-radius: 10px;
   padding: 12px 16px; font-size: 15px; font-weight: bold;
