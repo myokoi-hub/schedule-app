@@ -50,6 +50,11 @@
       <input class="contact-search" type="text" id="contactSearch"
         placeholder="🔍 名前・メアドで検索..." oninput="filterContacts()" autocomplete="off">
 
+      <div class="sort-tabs" style="margin-bottom:8px">
+        <button class="sort-tab active" id="modalSortName" onclick="setModalSort('name')">あいうえお順</button>
+        <button class="sort-tab" id="modalSortEmail" onclick="setModalSort('email')">メールアドレス順</button>
+      </div>
+
       <div class="contact-picker-list" id="contactPickerList"></div>
 
       <p style="text-align:center;margin-top:10px">
@@ -180,6 +185,50 @@
 
     // ---- メールモーダル ----
     let allContacts = [];  // サーバーから取得した連絡先キャッシュ
+    let modalSort = 'name';
+
+    // アドレス帳と同じソートロジック
+    function getSurname(email) {
+      const m = email.match(/^[^.]+\.([^@]+)@/);
+      return m ? m[1].toLowerCase() : email.toLowerCase();
+    }
+    const ROMAJI_MAP = [
+      ['shi','12'],['chi','17'],['tsu','18'],['sha','11'],['sho','15'],['shu','13'],
+      ['a','01'],['i','02'],['u','03'],['e','04'],['o','05'],
+      ['ka','06'],['ki','07'],['ku','08'],['ke','09'],['ko','10'],
+      ['ga','06'],['gi','07'],['gu','08'],['ge','09'],['go','10'],
+      ['sa','11'],['si','12'],['su','13'],['se','14'],['so','15'],
+      ['za','11'],['zi','12'],['zu','13'],['ze','14'],['zo','15'],
+      ['ta','16'],['ti','17'],['tu','18'],['te','19'],['to','20'],
+      ['da','16'],['di','17'],['du','18'],['de','19'],['do','20'],
+      ['na','21'],['ni','22'],['nu','23'],['ne','24'],['no','25'],
+      ['ha','26'],['hi','27'],['fu','28'],['hu','28'],['he','29'],['ho','30'],
+      ['ba','26'],['bi','27'],['bu','28'],['be','29'],['bo','30'],
+      ['pa','26'],['pi','27'],['pu','28'],['pe','29'],['po','30'],
+      ['ma','31'],['mi','32'],['mu','33'],['me','34'],['mo','35'],
+      ['ya','36'],['yu','37'],['yo','38'],
+      ['ra','39'],['ri','40'],['ru','41'],['re','42'],['ro','43'],
+      ['wa','44'],['wi','45'],['we','46'],['wo','47'],
+      ['nn','48'],['n','48'],
+    ];
+    function romajiKey(str) {
+      let key = '', i = 0;
+      while (i < str.length) {
+        let hit = false;
+        for (const [p, k] of ROMAJI_MAP) {
+          if (str.startsWith(p, i)) { key += k; i += p.length; hit = true; break; }
+        }
+        if (!hit) { key += str[i]; i++; }
+      }
+      return key;
+    }
+
+    function setModalSort(sort) {
+      modalSort = sort;
+      document.getElementById('modalSortName').classList.toggle('active', sort === 'name');
+      document.getElementById('modalSortEmail').classList.toggle('active', sort === 'email');
+      filterContacts();
+    }
 
     async function openMailModal() {
       mailData.selected = [];
@@ -215,9 +264,15 @@
         return;
       }
 
-      const filtered = q
+      let filtered = q
         ? allContacts.filter(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q))
-        : allContacts;
+        : [...allContacts];
+
+      if (modalSort === 'name') {
+        filtered.sort((a, b) => romajiKey(getSurname(a.email)).localeCompare(romajiKey(getSurname(b.email))));
+      } else {
+        filtered.sort((a, b) => a.email.localeCompare(b.email));
+      }
 
       if (filtered.length === 0) {
         list.innerHTML = `<p style="text-align:center;color:#aaa;padding:14px;font-size:13px">「${esc(q)}」は見つかりません</p>`;
