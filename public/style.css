@@ -163,10 +163,11 @@ input[type="text"]:focus, textarea:focus {
 .result-table th {
   background: #4A90D9;
   color: white;
-  padding: 10px 12px;
+  padding: 10px 8px;
   font-weight: normal;
   font-size: 13px;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-all;
 }
 .result-table th:first-child { text-align: left; min-width: 90px; }
 .result-table td {
