@@ -238,7 +238,8 @@ app.get('/api/events/:id/results', async (req, res) => {
     dates,
     responses,
     comments,
-    invited_count: (event.invited || []).length
+    invited_count: (event.invited || []).length,
+    invited: (event.invited || [])
   });
 });
 

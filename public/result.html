@@ -95,10 +95,14 @@
     }
 
     let currentDecidedId = null;
+    let currentInvited = [];
+    let currentTitle = '';
 
     function render(data) {
-      const { title, description, dates, responses, invited_count, deadline, decided_date_id, comments = {} } = data;
+      const { title, description, dates, responses, invited_count, deadline, decided_date_id, comments = {}, invited = [] } = data;
       currentDecidedId = decided_date_id;
+      currentInvited = invited;
+      currentTitle = title;
 
       // share URL
       const shareUrl = `${location.origin}/event.html?id=${eventId}`;
@@ -304,9 +308,27 @@
         });
         if (!res.ok) throw new Error();
         load();
+        if (!isCancel) sendDecideNotification(dateLabel);
       } catch {
         showToast('エラーが発生しました');
       }
+    }
+
+    function sendDecideNotification(dateLabel) {
+      const emails = currentInvited.map(c => c.email).filter(Boolean);
+      if (emails.length === 0) {
+        showToast('招待済みの連絡先がないためメール送信をスキップしました');
+        return;
+      }
+      if (!confirm(`${emails.length}名に確定日の案内メールを送りますか？\n\n宛先: ${emails.join(', ')}`)) return;
+
+      const subject = encodeURIComponent(`【確定】${currentTitle} の日程確定のお知らせ`);
+      const body = encodeURIComponent(
+        `${currentTitle} の日程が確定しました。\n\n` +
+        `確定日: ${dateLabel}\n\n` +
+        `ご参加をよろしくお願いいたします。`
+      );
+      window.location.href = `mailto:${emails.join(',')}?subject=${subject}&body=${body}`;
     }
 
     // ---- URLコピー ----
