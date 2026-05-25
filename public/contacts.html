@@ -37,21 +37,24 @@
         </div>
       </div>
 
-      <button class="btn btn-add" id="addBtn" onclick="toggleForm(true)">＋ 連絡先を追加</button>
-
-      <!-- 検索・並び替え -->
-      <div id="searchSortArea" style="margin-top:14px;display:none">
-        <input type="search" class="contact-search" id="searchInput"
-          placeholder="名前・メールアドレスで検索" oninput="renderFiltered()">
-        <div class="sort-tabs">
-          <button class="sort-tab active" id="sortName" onclick="setSort('name')">あいうえお順</button>
-          <button class="sort-tab" id="sortEmail" onclick="setSort('email')">メールアドレス順</button>
-        </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-add" id="addBtn" onclick="toggleForm(true)" style="flex:1">＋ 連絡先を追加</button>
+        <button class="btn btn-secondary" id="toggleListBtn" onclick="toggleList()" style="white-space:nowrap">一覧を表示 ▼</button>
       </div>
 
-      <!-- 連絡先リスト -->
-      <div id="contactList" style="margin-top:12px">
-        <p style="text-align:center;color:#aaa;padding:20px 0">読み込み中...</p>
+      <!-- 検索・並び替え＋連絡先リスト（デフォルト非表示） -->
+      <div id="listArea" style="display:none">
+        <div id="searchSortArea" style="margin-top:14px;display:none">
+          <input type="search" class="contact-search" id="searchInput"
+            placeholder="名前・メールアドレスで検索" oninput="renderFiltered()">
+          <div class="sort-tabs">
+            <button class="sort-tab active" id="sortName" onclick="setSort('name')">あいうえお順</button>
+            <button class="sort-tab" id="sortEmail" onclick="setSort('email')">メールアドレス順</button>
+          </div>
+        </div>
+
+        <!-- 連絡先リスト -->
+        <div id="contactList" style="margin-top:12px"></div>
       </div>
     </div>
 
@@ -170,6 +173,15 @@
       `).join('');
     }
 
+    let listVisible = false;
+
+    function toggleList() {
+      listVisible = !listVisible;
+      document.getElementById('listArea').style.display = listVisible ? 'block' : 'none';
+      document.getElementById('toggleListBtn').textContent = listVisible ? '一覧を隠す ▲' : '一覧を表示 ▼';
+      if (listVisible) renderList();
+    }
+
     function toggleForm(show) {
       document.getElementById('addForm').style.display = show ? 'block' : 'none';
       document.getElementById('addBtn').style.display  = show ? 'none'  : 'block';
@@ -283,7 +295,6 @@
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    renderList();
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
   </script>
 </body>
