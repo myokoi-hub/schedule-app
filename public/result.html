@@ -85,16 +85,20 @@
     async function load() {
       if (!eventId) { showError('URLが正しくありません'); return; }
       try {
-        const res = await fetch(`/api/events/${eventId}/results`);
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        render(data);
+        const [resEvent, resContacts] = await Promise.all([
+          fetch(`/api/events/${eventId}/results`),
+          fetch('/api/contacts')
+        ]);
+        if (!resEvent.ok) throw new Error();
+        const data = await resEvent.json();
+        const contacts = resContacts.ok ? await resContacts.json() : [];
+        render(data, contacts.length);
       } catch {
         showError('イベントが見つかりません');
       }
     }
 
-    function render(data) {
+    function render(data, totalContacts = 0) {
       const { title, description, dates, responses } = data;
 
       // share URL
@@ -170,7 +174,14 @@
         ${description ? `<p style="color:#666;font-size:14px;margin-bottom:18px">${esc(description)}</p>` : ''}
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div class="section-label" style="margin:0">回答状況（${participants.length}名）</div>
+          <div class="section-label" style="margin:0">
+            回答状況
+            <span style="font-weight:normal;font-size:14px;color:#555;margin-left:6px">
+              ${totalContacts > 0
+                ? `${totalContacts}名中 <strong>${participants.length}名</strong> 回答済み`
+                : `<strong>${participants.length}名</strong> 回答済み`}
+            </span>
+          </div>
           <button class="btn btn-secondary" onclick="load()" style="font-size:13px;padding:6px 14px">更新</button>
         </div>
 
