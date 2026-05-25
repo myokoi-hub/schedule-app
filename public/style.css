@@ -476,6 +476,18 @@ input[type="text"]:focus, textarea:focus {
   border-radius: 10px; padding: 16px; margin-bottom: 16px;
 }
 
+/* イベント一覧 */
+.event-list-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 4px; border-bottom: 1px solid #F0F0F0;
+  text-decoration: none; color: inherit;
+  transition: background 0.1s; border-radius: 8px;
+}
+.event-list-item:last-child { border-bottom: none; }
+.event-list-item:hover { background: #F0F7FF; }
+.event-list-title { font-size: 15px; font-weight: bold; color: #333; margin-bottom: 4px; }
+.event-list-meta { font-size: 12px; color: #999; }
+
 /* ===== スマホ対応 ===== */
 @media (max-width: 600px) {
   .container { margin: 16px auto; }

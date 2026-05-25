@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>イベント一覧 - スケジュール調整</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4A90D9">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+</head>
+<body>
+  <header class="header">
+    <h1>📅 スケジュール調整</h1>
+    <nav class="header-nav"><a href="/">🏠 ホーム</a></nav>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-title">📋 イベント一覧</div>
+      <div id="eventList">
+        <p style="text-align:center;color:#aaa;padding:28px 0;font-size:14px">読み込み中...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    async function load() {
+      const el = document.getElementById('eventList');
+      try {
+        const res = await fetch('/api/events');
+        const events = await res.json();
+
+        if (events.length === 0) {
+          el.innerHTML = `
+            <p style="text-align:center;color:#aaa;padding:28px 0;font-size:14px">
+              イベントがまだありません<br>
+              <a href="/" style="font-size:13px;color:#4A90D9;text-decoration:none">
+                ＋ イベントを作成する
+              </a>
+            </p>`;
+          return;
+        }
+
+        el.innerHTML = events.map(e => {
+          const date = new Date(e.created_at);
+          const dateStr = `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}`;
+          const okBadge = e.best_ok > 0
+            ? `<span style="background:#E8F5E9;color:#388E3C;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:bold">○最大 ${e.best_ok}人</span>`
+            : '';
+          return `
+            <a href="/result.html?id=${e.id}" class="event-list-item">
+              <div style="flex:1;min-width:0">
+                <div class="event-list-title">${esc(e.title)}</div>
+                <div class="event-list-meta">
+                  作成: ${dateStr}　候補: ${e.date_count}日程　回答: ${e.response_count}名
+                </div>
+                <div style="margin-top:4px">${okBadge}</div>
+              </div>
+              <span style="font-size:20px;color:#B3D4F0;font-weight:bold;flex-shrink:0;align-self:center">›</span>
+            </a>`;
+        }).join('');
+      } catch {
+        el.innerHTML = `<p style="text-align:center;color:#e55;padding:20px">読み込みに失敗しました</p>`;
+      }
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    load();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+  </script>
+</body>
+</html>

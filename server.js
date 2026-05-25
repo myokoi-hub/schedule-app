@@ -29,6 +29,17 @@ if (process.env.DATABASE_URL) {
   `).catch(err => console.error('DB contacts init error:', err));
 }
 
+async function getEvents() {
+  if (pgPool) {
+    const r = await pgPool.query('SELECT id, data, created_at FROM events ORDER BY created_at DESC');
+    return r.rows.map(row => ({ ...row.data, db_created_at: row.created_at }));
+  }
+  const data = readLocalData();
+  return Object.values(data.events).sort((a, b) =>
+    new Date(b.created_at) - new Date(a.created_at)
+  );
+}
+
 async function getEvent(id) {
   if (pgPool) {
     const r = await pgPool.query('SELECT data FROM events WHERE id = $1', [id]);
@@ -113,6 +124,31 @@ function writeLocalData(data) {
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/api/events', async (req, res) => {
+  const events = await getEvents();
+  const summary = events.map(e => {
+    const responsers = [...new Set(e.responses.map(r => r.name))];
+    // 日程ごとの○数を集計
+    const okCounts = {};
+    e.dates.forEach(d => { okCounts[d.id] = 0; });
+    e.responses.forEach(r => {
+      Object.entries(r.answers || {}).forEach(([did, av]) => {
+        if (av === '○' && okCounts[did] !== undefined) okCounts[did]++;
+      });
+    });
+    const bestOk = Math.max(0, ...Object.values(okCounts));
+    return {
+      id: e.id,
+      title: e.title,
+      created_at: e.db_created_at || e.created_at,
+      date_count: e.dates.length,
+      response_count: responsers.length,
+      best_ok: bestOk,
+    };
+  });
+  res.json(summary);
+});
 
 app.post('/api/events', async (req, res) => {
   const { title, description, dates } = req.body;
