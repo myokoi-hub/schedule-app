@@ -125,6 +125,17 @@ function writeLocalData(data) {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.post('/api/admin-auth', (req, res) => {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminPassword) return res.json({ ok: true });
+  const { password } = req.body;
+  if (password === adminPassword) {
+    res.json({ ok: true });
+  } else {
+    res.status(401).json({ ok: false, error: 'パスワードが違います' });
+  }
+});
+
 app.get('/api/events', async (req, res) => {
   const events = await getEvents();
   const summary = events.map(e => {

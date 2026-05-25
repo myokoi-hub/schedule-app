@@ -63,7 +63,18 @@
     </a>
 
     <!-- ③ イベント作成フォーム -->
-    <div class="card">
+    <div class="card" id="authCard" style="display:none">
+      <div class="card-title">🔒 管理者ログイン</div>
+      <p style="font-size:13px;color:#888;margin-bottom:12px">イベントを作成するにはパスワードを入力してください</p>
+      <div style="display:flex;gap:8px">
+        <input type="password" id="adminPasswordInput" placeholder="パスワード"
+          style="flex:1;padding:10px 13px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit"
+          onkeydown="if(event.key==='Enter')adminLogin()">
+        <button class="btn btn-primary" onclick="adminLogin()" style="white-space:nowrap">ログイン</button>
+      </div>
+    </div>
+
+    <div class="card" id="createCard" style="display:none">
       <div class="card-title">📅 新しいイベントを作成する</div>
 
       <div class="form-group">
@@ -104,10 +115,57 @@
     </div>
 
   </div>
+  <!-- 管理者ログインリンク（未認証時のみ表示） -->
+  <p id="adminLoginLink" style="text-align:center;margin:8px 0 24px;display:none">
+    <a href="#" onclick="showAuthCard();return false;" style="font-size:13px;color:#aaa;text-decoration:none">🔒 管理者ログイン</a>
+  </p>
 
   <div class="toast" id="toast"></div>
 
   <script>
+    // 管理者認証
+    async function checkAuth() {
+      const res = await fetch('/api/admin-auth', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({}) });
+      if (res.ok) {
+        // パスワード未設定 = 全員作成可
+        const data = await res.json();
+        if (data.ok) { showCreateForm(); return; }
+      }
+      // パスワード設定あり
+      if (localStorage.getItem('adminAuth') === 'true') {
+        showCreateForm();
+      } else {
+        document.getElementById('adminLoginLink').style.display = 'block';
+      }
+    }
+
+    function showCreateForm() {
+      document.getElementById('createCard').style.display = 'block';
+      document.getElementById('authCard').style.display = 'none';
+      document.getElementById('adminLoginLink').style.display = 'none';
+    }
+
+    function showAuthCard() {
+      document.getElementById('authCard').style.display = 'block';
+      document.getElementById('adminLoginLink').style.display = 'none';
+    }
+
+    async function adminLogin() {
+      const password = document.getElementById('adminPasswordInput').value;
+      const res = await fetch('/api/admin-auth', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ password })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        localStorage.setItem('adminAuth', 'true');
+        showCreateForm();
+      } else {
+        showToast(data.error || 'パスワードが違います');
+      }
+    }
+
     const WEEKDAYS = ['日','月','火','水','木','金','土'];
     const MONTHS   = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
@@ -275,6 +333,7 @@
     createBtn.addEventListener('click', createEvent);
     createBtn.addEventListener('touchend', function(e){ e.preventDefault(); createEvent(); });
 
+    checkAuth();
     renderCalendar();
     renderChips();
   </script>
