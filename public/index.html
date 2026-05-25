@@ -204,17 +204,22 @@
         `</select>`;
     }
 
+    function ctpClose(key) {
+      const wrap = document.getElementById(`ctp-${key}`);
+      if (wrap) wrap.innerHTML =
+        `<button class="ctp-btn" onclick="ctpOpen('${key}')">${selected[key].time}</button>`;
+    }
+
     function ctpHour(key, val) {
       const m = (selected[key].time || '00:00').split(':')[1] || '00';
       selected[key].time = `${val}:${m}`;
+      ctpClose(key);
     }
 
     function ctpMin(key, val) {
       const h = (selected[key].time || '00:00').split(':')[0] || '00';
       selected[key].time = `${h}:${val}`;
-      const wrap = document.getElementById(`ctp-${key}`);
-      if (wrap) wrap.innerHTML =
-        `<button class="ctp-btn" onclick="ctpOpen('${key}')">${selected[key].time}</button>`;
+      ctpClose(key);
     }
 
     function removeDate(key){
@@ -233,7 +238,8 @@
       if(!deadline){ showToast('回答締切日を入力してください'); return; }
       if(keys.length===0){ showToast('候補日程を1つ以上選択してください'); return; }
 
-      const btn = document.querySelector('.btn.btn-primary');
+      const btn = document.getElementById('createBtn');
+      if (btn.disabled) return;
       btn.disabled = true;
       btn.textContent = '作成中…';
 
