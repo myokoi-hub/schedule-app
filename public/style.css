@@ -377,7 +377,7 @@ input[type="text"]:focus, textarea:focus {
   .header { padding: 12px 12px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; text-align: left; }
   .header h1 { font-size: 16px; }
   .header-nav { position: static; transform: none; }
-  .header-nav a { font-size: 15px; padding: 4px 8px; }
+  .header-nav a { font-size: 15px; padding: 4px 8px; font-weight: bold; }
 }
 
 /* ===== モーダル ===== */
