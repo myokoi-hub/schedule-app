@@ -150,8 +150,8 @@
           const surname = parts[0] || p;
           const given   = parts[1] || '';
           return `
-          <th style="text-align:center;min-width:54px;padding:8px 4px">
-            <div style="font-size:12px;font-weight:bold;line-height:1.5">
+          <th style="text-align:center;min-width:54px;padding:8px 4px;white-space:normal;word-break:break-all">
+            <div style="font-size:12px;font-weight:bold;line-height:1.6">
               <div>${esc(surname)}</div>
               ${given ? `<div>${esc(given)}</div>` : ''}
             </div>
