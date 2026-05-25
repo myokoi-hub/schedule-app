@@ -61,7 +61,10 @@
 
         <div class="form-group">
           <label>お名前 <span style="color:#e55">*</span></label>
-          <input type="text" id="nameInput" placeholder="例: 田中 太郎" style="max-width:280px">
+          <div style="display:flex;gap:8px;max-width:280px">
+            <input type="text" id="lastNameInput" placeholder="姓（田中）" style="flex:1">
+            <input type="text" id="firstNameInput" placeholder="名（太郎）" style="flex:1">
+          </div>
         </div>
 
         <div class="form-group">
@@ -102,8 +105,10 @@
     }
 
     async function submit() {
-      const name = document.getElementById('nameInput').value.trim();
-      if (!name) { showToast('お名前を入力してください'); return; }
+      const lastName  = document.getElementById('lastNameInput').value.trim();
+      const firstName = document.getElementById('firstNameInput').value.trim();
+      if (!lastName) { showToast('姓を入力してください'); return; }
+      const name = firstName ? `${lastName} ${firstName}` : lastName;
 
       const comment = document.getElementById('commentInput').value.trim();
       const answers = eventDates.map(d => {
