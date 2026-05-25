@@ -427,7 +427,7 @@ input[type="text"]:focus, textarea:focus {
 
 /* 連絡先ピッカーリスト */
 .contact-picker-list {
-  max-height: 220px; overflow-y: auto;
+  max-height: 400px; overflow-y: auto;
   border: 1px solid #eee; border-radius: 8px;
 }
 .contact-picker-item {
