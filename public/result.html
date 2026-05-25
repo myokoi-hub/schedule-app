@@ -38,6 +38,17 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- コメントポップアップ -->
+  <div id="commentPopup" onclick="this.style.display='none'"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2000;align-items:center;justify-content:center;padding:24px">
+    <div onclick="event.stopPropagation()" style="background:#fff;border-radius:14px;padding:20px 22px;max-width:320px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.18)">
+      <div style="font-size:13px;color:#888;margin-bottom:6px" id="commentPopupName"></div>
+      <div style="font-size:15px;color:#333;line-height:1.7;white-space:pre-wrap;word-break:break-all" id="commentPopupText"></div>
+      <button onclick="document.getElementById('commentPopup').style.display='none'"
+        class="btn btn-secondary" style="margin-top:16px;width:100%">閉じる</button>
+    </div>
+  </div>
+
   <!-- メール送信モーダル -->
   <div class="modal-overlay" id="mailModal" style="display:none" onclick="overlayClose(event)">
     <div class="modal">
@@ -188,7 +199,12 @@
           <tr style="background:#F8FAFC;border-top:2px solid #EEE">
             <td style="text-align:left;padding:8px 10px;font-size:12px;color:#888;font-weight:normal">コメント</td>
             <td></td>
-            ${participants.map(p => `<td style="text-align:center;padding:6px 4px;font-size:11px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px">${esc(comments[p] || '')}</td>`).join('')}
+            ${participants.map(p => comments[p]
+              ? `<td style="text-align:center;padding:6px 4px">
+                   <span class="comment-icon" onclick="showComment('${esc(comments[p]).replace(/'/g,"\\'")}','${esc(p)}')" title="${esc(comments[p])}">💬</span>
+                 </td>`
+              : `<td></td>`
+            ).join('')}
           </tr>` : '';
 
         tableHtml = `
@@ -509,6 +525,13 @@
     // ---- ユーティリティ ----
     function showError(msg) {
       document.getElementById('mainCard').innerHTML = `<p style="color:#e55;text-align:center;padding:20px">${msg}</p>`;
+    }
+
+    function showComment(text, name) {
+      const popup = document.getElementById('commentPopup');
+      document.getElementById('commentPopupName').textContent = name;
+      document.getElementById('commentPopupText').textContent = text;
+      popup.style.display = 'flex';
     }
 
     function showToast(msg) {

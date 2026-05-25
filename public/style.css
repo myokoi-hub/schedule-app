@@ -508,6 +508,15 @@ input[type="text"]:focus, textarea:focus {
 .deadline-badge.expired { background: #FFF3F3; color: #e55; }
 .deadline-badge.today { background: #FFF8E1; color: #F57C00; }
 
+/* コメントアイコン */
+.comment-icon {
+  font-size: 18px;
+  cursor: pointer;
+  display: inline-block;
+  transition: transform 0.15s;
+}
+.comment-icon:hover { transform: scale(1.25); }
+
 /* 確定日バナー */
 .decided-banner {
   background: #E8F5E9; color: #2E7D32; border-radius: 10px;
