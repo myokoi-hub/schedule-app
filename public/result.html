@@ -97,7 +97,7 @@
     let currentDecidedId = null;
 
     function render(data) {
-      const { title, description, dates, responses, invited_count, deadline, decided_date_id } = data;
+      const { title, description, dates, responses, invited_count, deadline, decided_date_id, comments = {} } = data;
       currentDecidedId = decided_date_id;
 
       // share URL
@@ -139,33 +139,60 @@
       if (participants.length === 0) {
         tableHtml = `<p style="text-align:center;color:#aaa;padding:28px 0">まだ回答がありません</p>`;
       } else {
-        const rows = participants.map(p => `
-          <tr>
-            <td>${esc(p)}</td>
-            ${dates.map(d => `<td>${markHtml(answerMap[p]?.[d.id])}</td>`).join('')}
-          </tr>
-        `).join('');
+        const total = invited_count || participants.length;
+        // 推奨日（○が最多）
+        const bestDate = dates.reduce((best, d) =>
+          counts[d.id]['○'] > counts[best.id]['○'] ? d : best, dates[0]);
+        const hasBest = bestDate && counts[bestDate.id]['○'] > 0;
 
-        const countRow = `
-          <tr class="count-row">
-            <td>○の合計</td>
-            ${dates.map(d => `<td class="m-maru">${counts[d.id]['○']}</td>`).join('')}
-          </tr>
-        `;
+        const headerCols = participants.map(p => `
+          <th style="text-align:center;min-width:54px;padding:8px 4px">
+            <div class="participant-avatar">${esc(p.charAt(0))}</div>
+            <div style="font-size:11px;font-weight:normal;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px">${esc(p)}</div>
+          </th>`).join('');
+
+        const dateRows = dates.map(d => {
+          const ok = counts[d.id]['○'];
+          const rate = total > 0 ? Math.round(ok / total * 100) : 0;
+          const rateColor = rate >= 70 ? '#4CAF50' : rate >= 40 ? '#FF9800' : '#F44336';
+          const isRec = hasBest && d.id === bestDate.id;
+          return `
+            <tr${isRec ? ' style="background:#F0FFF4"' : ''}>
+              <td style="text-align:left;padding:8px 10px;white-space:nowrap">
+                ${isRec ? '<div><span class="recommend-badge">☆推奨</span></div>' : ''}
+                <div style="font-weight:bold;font-size:13px">${esc(d.date_label)}</div>
+              </td>
+              <td style="text-align:center;padding:8px 8px">
+                <div style="font-weight:bold;font-size:14px;color:${rateColor}">${rate}%</div>
+                <div style="height:4px;background:#eee;border-radius:2px;margin-top:3px;width:48px;margin-left:auto;margin-right:auto">
+                  <div style="height:4px;background:${rateColor};border-radius:2px;width:${rate}%"></div>
+                </div>
+              </td>
+              ${participants.map(p => `<td style="text-align:center;padding:8px 4px">${markHtml(answerMap[p]?.[d.id])}</td>`).join('')}
+            </tr>`;
+        }).join('');
+
+        const hasComments = participants.some(p => comments[p]);
+        const commentRow = hasComments ? `
+          <tr style="background:#F8FAFC;border-top:2px solid #EEE">
+            <td style="text-align:left;padding:8px 10px;font-size:12px;color:#888;font-weight:normal">コメント</td>
+            <td></td>
+            ${participants.map(p => `<td style="text-align:center;padding:6px 4px;font-size:11px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px">${esc(comments[p] || '')}</td>`).join('')}
+          </tr>` : '';
 
         tableHtml = `
           <div style="overflow-x:auto">
             <table class="result-table">
               <thead>
                 <tr>
-                  <th style="text-align:left">参加者</th>
-                  ${dates.map(d => `<th>${esc(d.date_label)}</th>`).join('')}
+                  <th style="text-align:left">候補日</th>
+                  <th style="text-align:center;min-width:70px">参加率</th>
+                  ${headerCols}
                 </tr>
               </thead>
-              <tbody>${rows}${countRow}</tbody>
+              <tbody>${dateRows}${commentRow}</tbody>
             </table>
-          </div>
-        `;
+          </div>`;
       }
 
       // 締切日HTML

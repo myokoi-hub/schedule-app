@@ -187,7 +187,7 @@ app.get('/api/events/:id', async (req, res) => {
 });
 
 app.post('/api/events/:id/responses', async (req, res) => {
-  const { participant_name, answers } = req.body;
+  const { participant_name, answers, comment } = req.body;
   if (!participant_name || !answers) {
     return res.status(400).json({ error: '必須項目が不足しています' });
   }
@@ -198,7 +198,7 @@ app.post('/api/events/:id/responses', async (req, res) => {
   event.responses = event.responses.filter(r => r.name !== participant_name);
   const answerMap = {};
   answers.forEach(({ date_id, availability }) => { answerMap[String(date_id)] = availability; });
-  event.responses.push({ name: participant_name, answers: answerMap });
+  event.responses.push({ name: participant_name, answers: answerMap, comment: comment || '' });
 
   await saveEvent(event);
   res.json({ success: true });
@@ -210,7 +210,9 @@ app.get('/api/events/:id/results', async (req, res) => {
 
   const dates = event.dates.map(d => ({ id: d.id, date_label: d.label }));
   const responses = [];
+  const comments = {};
   event.responses.forEach(r => {
+    comments[r.name] = r.comment || '';
     Object.entries(r.answers).forEach(([date_id, availability]) => {
       responses.push({ participant_name: r.name, date_id: Number(date_id), availability });
     });
@@ -224,6 +226,7 @@ app.get('/api/events/:id/results', async (req, res) => {
     decided_date_id: event.decided_date_id || null,
     dates,
     responses,
+    comments,
     invited_count: (event.invited || []).length
   });
 });

@@ -64,6 +64,11 @@
           <input type="text" id="nameInput" placeholder="例: 田中 太郎" style="max-width:280px">
         </div>
 
+        <div class="form-group">
+          <label>コメント（任意）</label>
+          <textarea id="commentInput" rows="2" placeholder="一言メモなど..." style="resize:vertical"></textarea>
+        </div>
+
         <div class="section-label" style="margin-bottom:8px">出欠を選んでください</div>
         <p class="hint" style="margin-bottom:12px">○ 参加できる &nbsp;／&nbsp; △ 未定 &nbsp;／&nbsp; × 参加できない</p>
 
@@ -100,6 +105,7 @@
       const name = document.getElementById('nameInput').value.trim();
       if (!name) { showToast('お名前を入力してください'); return; }
 
+      const comment = document.getElementById('commentInput').value.trim();
       const answers = eventDates.map(d => {
         const selected = document.querySelector(`.avail-btn[data-date="${d.id}"].selected-maru, .avail-btn[data-date="${d.id}"].selected-sankaku, .avail-btn[data-date="${d.id}"].selected-batsu`);
         return { date_id: d.id, availability: selected ? selected.dataset.val : '×' };
@@ -109,7 +115,7 @@
         const res = await fetch(`/api/events/${eventId}/responses`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ participant_name: name, answers })
+          body: JSON.stringify({ participant_name: name, answers, comment })
         });
         if (!res.ok) throw new Error();
         showToast('回答を送信しました！');
