@@ -240,6 +240,7 @@
       modalListVisible = !modalListVisible;
       document.getElementById('modalListArea').style.display = modalListVisible ? 'block' : 'none';
       document.getElementById('modalToggleBtn').textContent = modalListVisible ? '一覧を隠す ▲' : '一覧を表示 ▼';
+      if (modalListVisible) filterContacts();
     }
 
     function onModalSearchInput() {
