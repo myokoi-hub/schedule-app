@@ -94,8 +94,11 @@
       }
     }
 
+    let currentDecidedId = null;
+
     function render(data) {
-      const { title, description, dates, responses, invited_count } = data;
+      const { title, description, dates, responses, invited_count, deadline, decided_date_id } = data;
+      currentDecidedId = decided_date_id;
 
       // share URL
       const shareUrl = `${location.origin}/event.html?id=${eventId}`;
@@ -165,9 +168,69 @@
         `;
       }
 
+      // 締切日HTML
+      let deadlineHtml = '';
+      if (deadline) {
+        const d = new Date(deadline + 'T23:59:59');
+        const now = new Date();
+        const diffDays = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+        const dateStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+        if (diffDays < 0) {
+          deadlineHtml = `<div class="deadline-badge expired">⏰ 締切済み（${dateStr}）</div>`;
+        } else if (diffDays === 0) {
+          deadlineHtml = `<div class="deadline-badge today">⏰ 本日締切（${dateStr}）</div>`;
+        } else {
+          deadlineHtml = `<div class="deadline-badge">⏰ 締切: ${dateStr}（残り${diffDays}日）</div>`;
+        }
+      }
+
+      // 決定日バナー
+      let decidedBanner = '';
+      if (decided_date_id != null) {
+        const decidedDate = dates.find(d => d.id == decided_date_id);
+        if (decidedDate) {
+          decidedBanner = `<div class="decided-banner">✅ 決定日: ${esc(decidedDate.date_label)}</div>`;
+        }
+      }
+
+      // 推奨候補日（参加率順）
+      let recommendHtml = '';
+      if (participants.length > 0) {
+        const total = invited_count || participants.length;
+        const sorted = [...dates].sort((a, b) => {
+          if (counts[b.id]['○'] !== counts[a.id]['○']) return counts[b.id]['○'] - counts[a.id]['○'];
+          return counts[b.id]['△'] - counts[a.id]['△'];
+        }).filter(d => counts[d.id]['○'] > 0);
+
+        if (sorted.length > 0) {
+          const btnHtml = sorted.map(d => {
+            const ok = counts[d.id]['○'];
+            const san = counts[d.id]['△'];
+            const bat = counts[d.id]['×'];
+            const rate = Math.round(ok / total * 100);
+            const isDecided = decided_date_id == d.id;
+            return `
+              <button class="recommend-btn${isDecided ? ' decided' : ''}"
+                onclick="decideDate(${d.id}, '${esc(d.date_label)}')">
+                <span class="recommend-label">${isDecided ? '✅ ' : ''}${esc(d.date_label)}</span>
+                <span class="recommend-counts">○${ok} △${san} ×${bat}</span>
+                <span class="recommend-rate">${rate}%</span>
+              </button>`;
+          }).join('');
+          recommendHtml = `
+            <div style="margin-top:20px">
+              <div class="section-label" style="margin-bottom:10px">🏆 推奨候補日（参加率順）</div>
+              <p class="hint" style="margin-bottom:8px">ボタンを押すと決定日になります</p>
+              ${btnHtml}
+            </div>`;
+        }
+      }
+
       document.getElementById('mainCard').innerHTML = `
         <div class="card-title">${esc(title)}</div>
-        ${description ? `<p style="color:#666;font-size:14px;margin-bottom:18px">${esc(description)}</p>` : ''}
+        ${description ? `<p style="color:#666;font-size:14px;margin-bottom:14px">${esc(description)}</p>` : ''}
+        ${deadlineHtml}
+        ${decidedBanner}
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <div class="section-label" style="margin:0">
@@ -182,6 +245,7 @@
         </div>
 
         ${tableHtml}
+        ${recommendHtml}
 
         <div style="margin-top:20px;text-align:center">
           <a href="/event.html?id=${eventId}" class="btn btn-secondary">自分も回答する</a>
@@ -189,6 +253,26 @@
           <a href="/" class="btn btn-secondary">新しいイベントを作る</a>
         </div>
       `;
+    }
+
+    // ---- 決定日 ----
+    async function decideDate(dateId, dateLabel) {
+      const isCancel = dateId == currentDecidedId;
+      const msg = isCancel
+        ? `「${dateLabel}」の決定を取り消しますか？`
+        : `「${dateLabel}」を決定日にしますか？`;
+      if (!confirm(msg)) return;
+      try {
+        const res = await fetch(`/api/events/${eventId}/decide`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date_id: isCancel ? null : dateId })
+        });
+        if (!res.ok) throw new Error();
+        load();
+      } catch {
+        showToast('エラーが発生しました');
+      }
     }
 
     // ---- URLコピー ----

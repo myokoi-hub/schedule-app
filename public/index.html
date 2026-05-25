@@ -77,6 +77,11 @@
       </div>
 
       <div class="form-group">
+        <label>回答締切日（任意）</label>
+        <input type="date" id="deadline" style="width:100%;padding:10px 13px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;background:#FAFAFA;box-sizing:border-box">
+      </div>
+
+      <div class="form-group">
         <label>候補日程 <span style="color:#e55">*</span></label>
         <p class="hint" style="margin-bottom:10px">カレンダーで日付をクリックして選択。時間は右側に入力できます。</p>
 
@@ -235,11 +240,13 @@
         return selected[k].label + time;
       });
 
+      const deadline = document.getElementById('deadline').value || null;
+
       try{
         const res = await fetch('/api/events',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ title, description, dates })
+          body: JSON.stringify({ title, description, dates, deadline })
         });
         if(!res.ok) throw new Error('status:' + res.status);
         const data = await res.json();

@@ -162,6 +162,7 @@ app.post('/api/events', async (req, res) => {
     id,
     title,
     description: description || '',
+    deadline: req.body.deadline || null,
     dates: dates.map((label, i) => ({ id: i + 1, label })),
     responses: [],
     created_at: new Date().toISOString()
@@ -217,10 +218,21 @@ app.get('/api/events/:id/results', async (req, res) => {
     id: event.id,
     title: event.title,
     description: event.description,
+    deadline: event.deadline || null,
+    decided_date_id: event.decided_date_id || null,
     dates,
     responses,
     invited_count: (event.invited || []).length
   });
+});
+
+app.post('/api/events/:id/decide', async (req, res) => {
+  const { date_id } = req.body;
+  const event = await getEvent(req.params.id);
+  if (!event) return res.status(404).json({ error: 'イベントが見つかりません' });
+  event.decided_date_id = date_id ?? null;
+  await saveEvent(event);
+  res.json({ success: true });
 });
 
 app.post('/api/events/:id/invited', async (req, res) => {
