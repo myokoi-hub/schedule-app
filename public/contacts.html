@@ -67,6 +67,12 @@
     let currentSort = 'name';
     let displayList = [];
 
+    // メールアドレスから苗字部分を取得（例: m.yokoi@... → "yokoi"）
+    function getSurname(email) {
+      const m = email.match(/^[^.]+\.([^@]+)@/);
+      return m ? m[1].toLowerCase() : email.toLowerCase();
+    }
+
     function setSort(sort) {
       currentSort = sort;
       document.getElementById('sortName').classList.toggle('active', sort === 'name');
@@ -82,7 +88,7 @@
       );
 
       if (currentSort === 'name') {
-        displayList.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+        displayList.sort((a, b) => getSurname(a.email).localeCompare(getSurname(b.email)));
       } else {
         displayList.sort((a, b) => a.email.localeCompare(b.email));
       }
