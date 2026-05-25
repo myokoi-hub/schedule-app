@@ -73,6 +73,38 @@
       return m ? m[1].toLowerCase() : email.toLowerCase();
     }
 
+    // ローマ字をあいうえお順のソートキーに変換
+    const ROMAJI_MAP = [
+      ['shi','12'],['chi','17'],['tsu','18'],['sha','11'],['sho','15'],['shu','13'],
+      ['a','01'],['i','02'],['u','03'],['e','04'],['o','05'],
+      ['ka','06'],['ki','07'],['ku','08'],['ke','09'],['ko','10'],
+      ['ga','06'],['gi','07'],['gu','08'],['ge','09'],['go','10'],
+      ['sa','11'],['si','12'],['su','13'],['se','14'],['so','15'],
+      ['za','11'],['zi','12'],['zu','13'],['ze','14'],['zo','15'],
+      ['ta','16'],['ti','17'],['tu','18'],['te','19'],['to','20'],
+      ['da','16'],['di','17'],['du','18'],['de','19'],['do','20'],
+      ['na','21'],['ni','22'],['nu','23'],['ne','24'],['no','25'],
+      ['ha','26'],['hi','27'],['fu','28'],['hu','28'],['he','29'],['ho','30'],
+      ['ba','26'],['bi','27'],['bu','28'],['be','29'],['bo','30'],
+      ['pa','26'],['pi','27'],['pu','28'],['pe','29'],['po','30'],
+      ['ma','31'],['mi','32'],['mu','33'],['me','34'],['mo','35'],
+      ['ya','36'],['yu','37'],['yo','38'],
+      ['ra','39'],['ri','40'],['ru','41'],['re','42'],['ro','43'],
+      ['wa','44'],['wi','45'],['we','46'],['wo','47'],
+      ['nn','48'],['n','48'],
+    ];
+    function romajiKey(str) {
+      let key = '', i = 0;
+      while (i < str.length) {
+        let hit = false;
+        for (const [p, k] of ROMAJI_MAP) {
+          if (str.startsWith(p, i)) { key += k; i += p.length; hit = true; break; }
+        }
+        if (!hit) { key += str[i]; i++; }
+      }
+      return key;
+    }
+
     function setSort(sort) {
       currentSort = sort;
       document.getElementById('sortName').classList.toggle('active', sort === 'name');
@@ -88,7 +120,7 @@
       );
 
       if (currentSort === 'name') {
-        displayList.sort((a, b) => getSurname(a.email).localeCompare(getSurname(b.email)));
+        displayList.sort((a, b) => romajiKey(getSurname(a.email)).localeCompare(romajiKey(getSurname(b.email))));
       } else {
         displayList.sort((a, b) => a.email.localeCompare(b.email));
       }
