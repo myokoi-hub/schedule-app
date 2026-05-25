@@ -19,6 +19,11 @@
     <div class="card">
       <div class="card-title">📇 アドレス帳</div>
 
+      <!-- 検索バー（常時表示） -->
+      <input type="search" class="contact-search" id="searchInput"
+        placeholder="名前・メールアドレスで検索" oninput="onSearchInput()"
+        style="margin-bottom:12px">
+
       <!-- 追加フォーム（トグル） -->
       <div class="contact-add-form" id="addForm" style="display:none">
         <div class="form-group">
@@ -41,11 +46,6 @@
         <button class="btn btn-add" id="addBtn" onclick="toggleForm(true)" style="flex:1">＋ 連絡先を追加</button>
         <button class="btn btn-secondary" id="toggleListBtn" onclick="toggleList()" style="white-space:nowrap">一覧を表示 ▼</button>
       </div>
-
-      <!-- 検索バー（常時表示） -->
-      <input type="search" class="contact-search" id="searchInput"
-        placeholder="名前・メールアドレスで検索" oninput="onSearchInput()"
-        style="margin-top:12px">
 
       <!-- 並び替え＋連絡先リスト（デフォルト非表示） -->
       <div id="listArea" style="display:none">
