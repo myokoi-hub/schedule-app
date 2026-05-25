@@ -103,11 +103,12 @@
       document.getElementById('shareCard').style.display = 'block';
 
       // メールデータをセット（モーダルで使う）
-      mailData.subject = `【出欠確認】${title}`;
+      mailData.subject = `出欠確認のお願い: ${title}`;
       mailData.body = `${title} の日程調整にご協力をお願いします。\n\n`
-        + `下記のURLから出欠をご入力ください。\n\n`
+        + `以下のURLから出欠をご入力ください。\n\n`
         + `${shareUrl}\n\n`
-        + `【候補日程】\n${dates.map(d => `・${d.date_label}`).join('\n')}`;
+        + `候補日程:\n${dates.map(d => `・${d.date_label}`).join('\n')}\n\n`
+        + `よろしくお願いいたします。`;
 
       // participants & answer map
       const participants = [...new Set(responses.map(r => r.participant_name))];
