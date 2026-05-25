@@ -56,7 +56,10 @@
               <div style="flex:1;min-width:0">
                 <div class="event-list-title">${esc(e.title)}</div>
                 <div class="event-list-meta">
-                  作成: ${dateStr}　候補: ${e.date_count}日程　回答: ${e.response_count}名
+                  作成: ${dateStr}　候補: ${e.date_count}日程
+                  ${e.invited_count > 0
+                    ? `${e.invited_count}名中 ${e.response_count}名 回答`
+                    : `回答: ${e.response_count}名`}
                 </div>
                 <div style="margin-top:4px">${okBadge}</div>
               </div>

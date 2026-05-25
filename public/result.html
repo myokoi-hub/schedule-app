@@ -85,21 +85,17 @@
     async function load() {
       if (!eventId) { showError('URLが正しくありません'); return; }
       try {
-        const [resEvent, resContacts] = await Promise.all([
-          fetch(`/api/events/${eventId}/results`),
-          fetch('/api/contacts')
-        ]);
-        if (!resEvent.ok) throw new Error();
-        const data = await resEvent.json();
-        const contacts = resContacts.ok ? await resContacts.json() : [];
-        render(data, contacts.length);
+        const res = await fetch(`/api/events/${eventId}/results`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        render(data);
       } catch {
         showError('イベントが見つかりません');
       }
     }
 
-    function render(data, totalContacts = 0) {
-      const { title, description, dates, responses } = data;
+    function render(data) {
+      const { title, description, dates, responses, invited_count } = data;
 
       // share URL
       const shareUrl = `${location.origin}/event.html?id=${eventId}`;
@@ -177,8 +173,8 @@
           <div class="section-label" style="margin:0">
             回答状況
             <span style="font-weight:normal;font-size:14px;color:#555;margin-left:6px">
-              ${totalContacts > 0
-                ? `${totalContacts}名中 <strong>${participants.length}名</strong> 回答済み`
+              ${invited_count > 0
+                ? `${invited_count}名中 <strong>${participants.length}名</strong> 回答済み`
                 : `<strong>${participants.length}名</strong> 回答済み`}
             </span>
           </div>
@@ -357,6 +353,13 @@
         showToast('宛先を1人以上選んでください');
         return;
       }
+      // 招待した人をイベントに記録（分母として使用）
+      fetch(`/api/events/${eventId}/invited`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contacts: mailData.selected })
+      }).catch(() => {});
+
       const to = mailData.selected.map(c => c.email).join(',');
       window.location.href =
         `mailto:${to}?subject=${encodeURIComponent(mailData.subject)}&body=${encodeURIComponent(mailData.body)}`;

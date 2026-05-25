@@ -144,6 +144,7 @@ app.get('/api/events', async (req, res) => {
       created_at: e.db_created_at || e.created_at,
       date_count: e.dates.length,
       response_count: responsers.length,
+      invited_count: (e.invited || []).length,
       best_ok: bestOk,
     };
   });
@@ -212,7 +213,29 @@ app.get('/api/events/:id/results', async (req, res) => {
     });
   });
 
-  res.json({ id: event.id, title: event.title, description: event.description, dates, responses });
+  res.json({
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    dates,
+    responses,
+    invited_count: (event.invited || []).length
+  });
+});
+
+app.post('/api/events/:id/invited', async (req, res) => {
+  const { contacts } = req.body;
+  if (!Array.isArray(contacts)) return res.status(400).json({ error: '不正なデータです' });
+  const event = await getEvent(req.params.id);
+  if (!event) return res.status(404).json({ error: 'イベントが見つかりません' });
+
+  const existing = event.invited || [];
+  contacts.forEach(c => {
+    if (!existing.some(e => e.id === c.id)) existing.push({ id: c.id, name: c.name, email: c.email });
+  });
+  event.invited = existing;
+  await saveEvent(event);
+  res.json({ success: true, invited_count: existing.length });
 });
 
 // ---- 連絡先API ----
