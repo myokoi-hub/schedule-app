@@ -2,13 +2,13 @@
 
 body {
   font-family: 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', 'Meiryo', sans-serif;
-  background: #F0F4F8;
+  background: #F2F6F0;
   color: #333;
   min-height: 100vh;
 }
 
 .header {
-  background: #4A90D9;
+  background: #5BAD4A;
   color: white;
   padding: 16px 24px;
   text-align: center;
@@ -30,9 +30,9 @@ body {
 .card-title {
   font-size: 17px;
   font-weight: bold;
-  color: #4A90D9;
+  color: #5BAD4A;
   padding-bottom: 14px;
-  border-bottom: 2px solid #EBF4FF;
+  border-bottom: 2px solid #EBF8E8;
   margin-bottom: 20px;
 }
 
@@ -59,7 +59,7 @@ input[type="text"], textarea {
 
 input[type="text"]:focus, textarea:focus {
   outline: none;
-  border-color: #4A90D9;
+  border-color: #5BAD4A;
   background: white;
 }
 
@@ -99,48 +99,48 @@ input[type="text"]:focus, textarea:focus {
 }
 
 .btn-primary {
-  background: #4A90D9;
+  background: #5BAD4A;
   color: white;
   width: 100%;
   padding: 14px;
   font-size: 16px;
-  box-shadow: 0 2px 6px rgba(74,144,217,0.35);
+  box-shadow: 0 2px 6px rgba(91,173,74,0.35);
   touch-action: manipulation;
   -webkit-tap-highlight-color: rgba(0,0,0,0.1);
   position: relative;
   z-index: 10;
 }
-.btn-primary:hover { background: #3A80C9; }
+.btn-primary:hover { background: #4A9C39; }
 
 .btn-secondary {
-  background: #EBF4FF;
-  color: #4A90D9;
-  border: 1px solid #B3D4F0;
+  background: #EBF8E8;
+  color: #5BAD4A;
+  border: 1px solid #B3D9AE;
   font-size: 14px;
 }
-.btn-secondary:hover { background: #D8ECFF; }
+.btn-secondary:hover { background: #D5EDD0; }
 
 .btn-add {
   width: 100%;
   padding: 10px;
   background: none;
-  border: 1.5px dashed #B3D4F0;
-  color: #4A90D9;
+  border: 1.5px dashed #B3D9AE;
+  color: #5BAD4A;
   border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
 }
-.btn-add:hover { background: #F0F7FF; }
+.btn-add:hover { background: #F0F8EE; }
 
 /* Share URL */
 .share-box {
   display: flex;
   gap: 8px;
   align-items: center;
-  background: #F0F7FF;
-  border: 1px solid #B3D4F0;
+  background: #F0F8EE;
+  border: 1px solid #B3D9AE;
   border-radius: 8px;
   padding: 10px 14px;
 }
@@ -161,7 +161,7 @@ input[type="text"]:focus, textarea:focus {
   font-size: 14px;
 }
 .result-table th {
-  background: #4A90D9;
+  background: #5BAD4A;
   color: white;
   padding: 10px 8px;
   font-weight: normal;
@@ -177,7 +177,7 @@ input[type="text"]:focus, textarea:focus {
 }
 .result-table td:first-child { text-align: left; font-weight: bold; }
 .result-table tr:hover td { background: #F8FAFC; }
-.count-row td { background: #F0F7FF !important; font-weight: bold; font-size: 13px; }
+.count-row td { background: #F0F8EE !important; font-weight: bold; font-size: 13px; }
 
 /* Availability buttons */
 .avail-table {
@@ -186,7 +186,7 @@ input[type="text"]:focus, textarea:focus {
   font-size: 14px;
 }
 .avail-table th {
-  background: #4A90D9;
+  background: #5BAD4A;
   color: white;
   padding: 10px 8px;
   font-weight: normal;
@@ -213,7 +213,7 @@ input[type="text"]:focus, textarea:focus {
   transition: all 0.15s;
   color: #999;
 }
-.avail-btn:hover { border-color: #4A90D9; color: #333; }
+.avail-btn:hover { border-color: #5BAD4A; color: #333; }
 .avail-btn.selected-maru  { background: #2E86AB; border-color: #2E86AB; color: white; }
 .avail-btn.selected-sankaku { background: #F4A261; border-color: #F4A261; color: white; }
 .avail-btn.selected-batsu  { background: #E63946; border-color: #E63946; color: white; }
@@ -247,11 +247,11 @@ input[type="text"]:focus, textarea:focus {
 .section-label { font-size: 14px; font-weight: bold; color: #555; margin-bottom: 10px; }
 
 /* ===== カレンダー ===== */
-.calendar { border: 1px solid #E0ECF8; border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
+.calendar { border: 1px solid #D4ECD0; border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
 
 .cal-header {
   display: flex; align-items: center; justify-content: space-between;
-  background: #4A90D9; color: white; padding: 10px 14px;
+  background: #5BAD4A; color: white; padding: 10px 14px;
 }
 .cal-header span { font-size: 15px; font-weight: bold; }
 .cal-nav {
@@ -269,26 +269,26 @@ input[type="text"]:focus, textarea:focus {
   font-weight: bold; color: #888; background: #F8FAFC;
 }
 .cal-dow:first-child { color: #E63946; }
-.cal-dow:last-child  { color: #4A90D9; }
+.cal-dow:last-child  { color: #5BAD4A; }
 
 .cal-day {
   text-align: center; padding: 9px 0; font-size: 14px;
   cursor: pointer; border-top: 1px solid #F0F0F0; position: relative;
   transition: background 0.1s;
 }
-.cal-day:hover:not(.cal-empty):not(.cal-past) { background: #EBF4FF; }
+.cal-day:hover:not(.cal-empty):not(.cal-past) { background: #EBF8E8; }
 .cal-day.cal-empty  { cursor: default; }
 .cal-day.cal-past   { color: #ccc; cursor: default; }
-.cal-day.cal-today  { font-weight: bold; color: #4A90D9; }
+.cal-day.cal-today  { font-weight: bold; color: #5BAD4A; }
 .cal-day.cal-today::after {
   content: ''; display: block; width: 4px; height: 4px;
-  background: #4A90D9; border-radius: 50%;
+  background: #5BAD4A; border-radius: 50%;
   margin: 2px auto 0;
 }
 .cal-day.cal-sun { color: #E63946; }
-.cal-day.cal-sat { color: #4A90D9; }
+.cal-day.cal-sat { color: #5BAD4A; }
 .cal-day.cal-selected {
-  background: #4A90D9 !important; color: white !important;
+  background: #5BAD4A !important; color: white !important;
   font-weight: bold;
 }
 .cal-day.cal-selected.cal-today::after { background: white; }
@@ -297,7 +297,7 @@ input[type="text"]:focus, textarea:focus {
 .selected-chips { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .chip {
   display: flex; align-items: center; gap: 8px;
-  background: #EBF4FF; border: 1px solid #B3D4F0;
+  background: #EBF8E8; border: 1px solid #B3D9AE;
   border-radius: 8px; padding: 8px 12px;
 }
 .chip-label { font-size: 14px; color: #333; font-weight: bold; flex-shrink: 0; }
@@ -328,15 +328,15 @@ input[type="text"]:focus, textarea:focus {
 /* ===== カスタム時間ピッカー ===== */
 .ctp { display: inline-flex; align-items: center; }
 .ctp-btn {
-  border: none; background: rgba(74,144,217,0.12);
-  color: #4A90D9; font-size: 14px; font-family: inherit;
+  border: none; background: rgba(91,173,74,0.12);
+  color: #5BAD4A; font-size: 14px; font-family: inherit;
   font-weight: bold; cursor: pointer; padding: 3px 10px;
   border-radius: 6px; transition: background 0.15s; white-space: nowrap;
 }
-.ctp-btn:hover { background: rgba(74,144,217,0.25); }
+.ctp-btn:hover { background: rgba(91,173,74,0.25); }
 .ctp-sel {
   font-size: 14px; font-family: inherit;
-  border: 1px solid #B3D4F0; border-radius: 6px;
+  border: 1px solid #B3D9AE; border-radius: 6px;
   padding: 3px 4px; color: #333; background: white; cursor: pointer;
 }
 .ctp-colon { font-weight: bold; color: #555; padding: 0 3px; }
@@ -348,7 +348,7 @@ input[type="text"]:focus, textarea:focus {
 .step { flex: 1; text-align: center; }
 .step-num {
   width: 32px; height: 32px; border-radius: 50%;
-  background: #4A90D9; color: white;
+  background: #5BAD4A; color: white;
   font-size: 14px; font-weight: bold;
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 6px;
@@ -361,7 +361,7 @@ input[type="text"]:focus, textarea:focus {
   display: flex; align-items: center; gap: 14px;
   text-decoration: none; transition: box-shadow 0.15s;
 }
-.home-link-card:hover { box-shadow: 0 4px 16px rgba(74,144,217,0.18); }
+.home-link-card:hover { box-shadow: 0 4px 16px rgba(91,173,74,0.18); }
 
 /* ===== ヘッダーナビ ===== */
 .header { position: relative; }
@@ -402,16 +402,16 @@ input[type="text"]:focus, textarea:focus {
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
 }
 .modal-title {
-  font-size: 16px; font-weight: bold; color: #4A90D9;
+  font-size: 16px; font-weight: bold; color: #5BAD4A;
   margin-bottom: 16px; padding-bottom: 12px;
-  border-bottom: 2px solid #EBF4FF;
+  border-bottom: 2px solid #EBF8E8;
 }
 
 /* 宛先チップ（モーダル内） */
 .email-chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; min-height: 28px; }
 .email-chip {
   display: inline-flex; align-items: center; gap: 4px;
-  background: #4A90D9; color: white; border-radius: 20px;
+  background: #5BAD4A; color: white; border-radius: 20px;
   padding: 4px 10px; font-size: 13px; cursor: pointer;
   transition: background 0.15s;
 }
@@ -424,7 +424,7 @@ input[type="text"]:focus, textarea:focus {
   font-size: 15px; font-family: inherit;
   background: #FAFAFA; margin-bottom: 8px;
 }
-.contact-search:focus { outline: none; border-color: #4A90D9; background: white; }
+.contact-search:focus { outline: none; border-color: #5BAD4A; background: white; }
 
 /* 連絡先ピッカーリスト */
 .contact-picker-list {
@@ -437,15 +437,15 @@ input[type="text"]:focus, textarea:focus {
   border-bottom: 1px solid #F5F5F5; transition: background 0.1s;
 }
 .contact-picker-item:last-child { border-bottom: none; }
-.contact-picker-item:hover { background: #F0F7FF; }
-.contact-picker-item.cp-selected { background: #EBF4FF; }
+.contact-picker-item:hover { background: #F0F8EE; }
+.contact-picker-item.cp-selected { background: #EBF8E8; }
 .contact-check {
   width: 22px; height: 22px; border-radius: 50%;
   border: 2px solid #ccc; display: flex; align-items: center;
   justify-content: center; font-size: 13px; color: transparent;
   flex-shrink: 0; transition: all 0.15s;
 }
-.cp-selected .contact-check { background: #4A90D9; border-color: #4A90D9; color: white; }
+.cp-selected .contact-check { background: #5BAD4A; border-color: #5BAD4A; color: white; }
 
 /* 連絡先リスト（contacts.html） */
 .contact-item {
@@ -461,12 +461,12 @@ input[type="text"]:focus, textarea:focus {
 .sort-tabs { display: flex; gap: 6px; margin-top: 8px; }
 .sort-tab {
   padding: 5px 14px; border-radius: 20px;
-  border: 1px solid #B3D4F0; background: white;
-  color: #4A90D9; font-size: 12px; cursor: pointer;
+  border: 1px solid #B3D9AE; background: white;
+  color: #5BAD4A; font-size: 12px; cursor: pointer;
   font-family: inherit; transition: all 0.15s;
 }
-.sort-tab:hover { background: #EBF4FF; }
-.sort-tab.active { background: #4A90D9; color: white; border-color: #4A90D9; }
+.sort-tab:hover { background: #EBF8E8; }
+.sort-tab.active { background: #5BAD4A; color: white; border-color: #5BAD4A; }
 
 /* 上下移動ボタン */
 .btn-move {
@@ -475,19 +475,19 @@ input[type="text"]:focus, textarea:focus {
   display: flex; align-items: center; justify-content: center;
   padding: 0; font-family: inherit; transition: all 0.1s;
 }
-.btn-move:hover:not(:disabled) { background: #EBF4FF; color: #4A90D9; border-color: #B3D4F0; }
+.btn-move:hover:not(:disabled) { background: #EBF8E8; color: #5BAD4A; border-color: #B3D9AE; }
 .btn-move:disabled { opacity: 0.25; cursor: default; }
 
 /* 連絡先追加フォーム */
 .contact-add-form {
-  background: #F8FAFF; border: 1px solid #B3D4F0;
+  background: #F5FDF3; border: 1px solid #B3D9AE;
   border-radius: 10px; padding: 16px; margin-bottom: 16px;
 }
 
 /* 参加者アバター */
 .participant-avatar {
   width: 34px; height: 34px; border-radius: 50%;
-  background: #4A90D9; color: white;
+  background: #5BAD4A; color: white;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px; font-weight: bold; margin: 0 auto 3px;
 }
@@ -502,7 +502,7 @@ input[type="text"]:focus, textarea:focus {
 /* 締切日バッジ */
 .deadline-badge {
   display: inline-block; padding: 5px 14px; border-radius: 20px;
-  font-size: 13px; background: #EBF4FF; color: #4A90D9;
+  font-size: 13px; background: #EBF8E8; color: #5BAD4A;
   margin-bottom: 14px; font-weight: bold;
 }
 .deadline-badge.expired { background: #FFF3F3; color: #e55; }
@@ -527,16 +527,16 @@ input[type="text"]:focus, textarea:focus {
 /* 推奨候補日ボタン */
 .recommend-btn {
   width: 100%; text-align: left; padding: 12px 16px;
-  border: 2px solid #B3D4F0; border-radius: 10px;
+  border: 2px solid #B3D9AE; border-radius: 10px;
   background: white; margin-bottom: 8px; cursor: pointer;
   font-family: inherit; display: flex; align-items: center;
   gap: 8px; font-size: 14px; color: #333; transition: all 0.15s;
 }
-.recommend-btn:hover { background: #EBF4FF; border-color: #4A90D9; }
+.recommend-btn:hover { background: #EBF8E8; border-color: #5BAD4A; }
 .recommend-btn.decided { background: #E8F5E9; border-color: #4CAF50; }
 .recommend-label { flex: 1; font-weight: bold; }
 .recommend-counts { font-size: 12px; color: #888; }
-.recommend-rate { font-size: 14px; font-weight: bold; color: #4A90D9; min-width: 44px; text-align: right; }
+.recommend-rate { font-size: 14px; font-weight: bold; color: #5BAD4A; min-width: 44px; text-align: right; }
 .recommend-btn.decided .recommend-rate { color: #4CAF50; }
 
 /* イベント一覧 */
@@ -547,7 +547,7 @@ input[type="text"]:focus, textarea:focus {
   transition: background 0.1s; border-radius: 8px;
 }
 .event-list-item:last-child { border-bottom: none; }
-.event-list-item:hover { background: #F0F7FF; }
+.event-list-item:hover { background: #F0F8EE; }
 .event-list-title { font-size: 15px; font-weight: bold; color: #333; margin-bottom: 4px; }
 .event-list-meta { font-size: 12px; color: #999; }
 
