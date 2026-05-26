@@ -214,13 +214,16 @@ input[type="text"]:focus, textarea:focus {
   transition: all 0.15s;
   color: #999;
 }
-.avail-btn[data-val="○"] { color: #5BAD4A; border-color: #B3D9AE; }
-.avail-btn[data-val="△"] { color: #F4A261; border-color: #F4A261; }
-.avail-btn[data-val="×"] { color: #E63946; border-color: #E63946; }
+.avail-btn[data-val="○"] { border-color: #B3D9AE; }
+.avail-btn[data-val="△"] { border-color: #F4A261; }
+.avail-btn[data-val="×"] { border-color: #E63946; }
 .avail-btn:hover { opacity: 0.75; }
-.avail-btn.selected-maru  { background: #5BAD4A; border-color: #5BAD4A; color: white; }
-.avail-btn.selected-sankaku { background: #F4A261; border-color: #F4A261; color: white; }
-.avail-btn.selected-batsu  { background: #E63946; border-color: #E63946; color: white; }
+.avail-btn.selected-maru  { background: #5BAD4A; border-color: #5BAD4A; }
+.avail-btn.selected-maru svg circle { stroke: white; }
+.avail-btn.selected-sankaku { background: #F4A261; border-color: #F4A261; }
+.avail-btn.selected-sankaku svg polygon { stroke: white; }
+.avail-btn.selected-batsu  { background: #E63946; border-color: #E63946; }
+.avail-btn.selected-batsu svg line { stroke: white; }
 
 /* Mark colors */
 .m-maru    { color: #2E86AB; font-weight: 900; font-size: 20px; }
