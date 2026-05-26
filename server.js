@@ -298,22 +298,18 @@ app.get('/api/events/:id/calendar.ics', async (req, res) => {
   if (new Date(year, month-1, day) < new Date(now.getFullYear(), now.getMonth(), now.getDate())) year++;
 
   const pad = n => String(n).padStart(2,'0');
-  // JST (UTC+9) → UTC に変換してZサフィックスで出力
-  const fmtUtc = d => {
-    const u = new Date(d.getTime() - 9*60*60*1000);
-    return `${u.getUTCFullYear()}${pad(u.getUTCMonth()+1)}${pad(u.getUTCDate())}T${pad(u.getUTCHours())}${pad(u.getUTCMinutes())}00Z`;
-  };
-  const dtStart = new Date(year, month-1, day, hour, min);
-  const dtEnd   = new Date(year, month-1, day, hour+1, min);
-  const now2 = new Date();
-  const stamp = fmtUtc(now2);
+  // Date.UTC で JST→UTC変換（サーバーのタイムゾーン非依存）
+  const fmtUtc = d => `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
+  const dtStart = new Date(Date.UTC(year, month-1, day, hour-9, min, 0));
+  const dtEnd   = new Date(Date.UTC(year, month-1, day, hour-9+1, min, 0));
+  const stamp = fmtUtc(new Date());
 
   const ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Schedule App//Schedule App//EN',
     'CALSCALE:GREGORIAN',
-    'METHOD:REQUEST',
+    'METHOD:PUBLISH',
     'BEGIN:VEVENT',
     `UID:${event.id}-${event.decided_date_id}@schedule-app`,
     `DTSTAMP:${stamp}`,
@@ -321,7 +317,6 @@ app.get('/api/events/:id/calendar.ics', async (req, res) => {
     `DTEND:${fmtUtc(dtEnd)}`,
     `SUMMARY:${event.title.replace(/[,;\\]/g, s => '\\' + s)}`,
     event.description ? `DESCRIPTION:${event.description.replace(/\n/g,'\\n')}` : null,
-    'STATUS:CONFIRMED',
     'END:VEVENT',
     'END:VCALENDAR'
   ].filter(Boolean).join('\r\n');
