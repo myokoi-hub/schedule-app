@@ -337,6 +337,24 @@
       }
     }
 
+    function parseJpDate(label) {
+      const m = label.match(/(\d+)月(\d+)日[^　\s]*[\s　]+(\d+):(\d+)/);
+      const m2 = label.match(/(\d+)月(\d+)日/);
+      if (!m2) return null;
+      const month = parseInt(m ? m[1] : m2[1]);
+      const day   = parseInt(m ? m[2] : m2[2]);
+      const hour  = m ? parseInt(m[3]) : 10;
+      const min   = m ? parseInt(m[4]) : 0;
+      const now = new Date();
+      let year = now.getFullYear();
+      if (new Date(year, month-1, day) < new Date(now.getFullYear(), now.getMonth(), now.getDate())) year++;
+      const pad = n => String(n).padStart(2,'0');
+      const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+      const start = new Date(year, month-1, day, hour, min);
+      const end   = new Date(year, month-1, day, hour+1, min);
+      return { start: fmt(start), end: fmt(end) };
+    }
+
     function sendDecideNotification(dateLabel) {
       const emails = currentInvited.map(c => c.email).filter(Boolean);
       if (emails.length === 0) {
@@ -345,12 +363,21 @@
       }
       if (!confirm(`${emails.length}名に確定日の案内メールを送りますか？\n\n宛先: ${emails.join(', ')}`)) return;
 
+      const icsUrl = `${location.origin}/api/events/${eventId}/calendar.ics`;
+      const dt = parseJpDate(dateLabel);
+      const outlookUrl = dt
+        ? `https://outlook.live.com/calendar/0/addevent?subject=${encodeURIComponent(currentTitle)}&startdt=${dt.start}&enddt=${dt.end}`
+        : null;
+
       const subject = encodeURIComponent(`日程確定のお知らせ`);
       const body = encodeURIComponent(
         `お疲れ様です。\n` +
         `【${currentTitle}】の日程が確定しましたのでご案内いたします。\n\n` +
         `【日時】${dateLabel}\n\n` +
-        `当日はよろしくお願いいたします。`
+        `当日はよろしくお願いいたします。\n\n` +
+        `＊ カレンダーに追加 ＊\n` +
+        (outlookUrl ? `Outlook: ${outlookUrl}\n` : '') +
+        `その他（Apple / Google等）: ${icsUrl}`
       );
       window.location.href = `mailto:${emails.join(',')}?subject=${subject}&body=${body}`;
     }

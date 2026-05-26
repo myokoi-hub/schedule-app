@@ -276,6 +276,50 @@ app.post('/api/events/:id/decide', async (req, res) => {
   res.json({ success: true });
 });
 
+app.get('/api/events/:id/calendar.ics', async (req, res) => {
+  const event = await getEvent(req.params.id);
+  if (!event) return res.status(404).send('Not found');
+  if (event.decided_date_id == null) return res.status(404).send('確定日が設定されていません');
+  const decidedDate = event.dates.find(d => d.id == event.decided_date_id);
+  if (!decidedDate) return res.status(404).send('日付が見つかりません');
+
+  const label = decidedDate.label;
+  const m = label.match(/(\d+)月(\d+)日[^　\s]*[\s　]+(\d+):(\d+)/);
+  const m2 = label.match(/(\d+)月(\d+)日/);
+  if (!m2) return res.status(400).send('日付の解析に失敗しました');
+
+  const month = parseInt(m ? m[1] : m2[1]);
+  const day   = parseInt(m ? m[2] : m2[2]);
+  const hour  = m ? parseInt(m[3]) : 10;
+  const min   = m ? parseInt(m[4]) : 0;
+
+  const now = new Date();
+  let year = now.getFullYear();
+  if (new Date(year, month-1, day) < new Date(now.getFullYear(), now.getMonth(), now.getDate())) year++;
+
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  const dtStart = new Date(year, month-1, day, hour, min);
+  const dtEnd   = new Date(year, month-1, day, hour+1, min);
+
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0',
+    'PRODID:-//Schedule App//Schedule App//EN',
+    'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${event.id}-${event.decided_date_id}@schedule-app`,
+    `DTSTART;TZID=Asia/Tokyo:${fmt(dtStart)}`,
+    `DTEND;TZID=Asia/Tokyo:${fmt(dtEnd)}`,
+    `SUMMARY:${event.title.replace(/[,;\\]/g, s => '\\' + s)}`,
+    event.description ? `DESCRIPTION:${event.description.replace(/\n/g,'\\n')}` : null,
+    'END:VEVENT', 'END:VCALENDAR'
+  ].filter(Boolean).join('\r\n');
+
+  res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="event.ics"`);
+  res.send(ics);
+});
+
 app.post('/api/events/:id/invited', async (req, res) => {
   const { contacts } = req.body;
   if (!Array.isArray(contacts)) return res.status(400).json({ error: '不正なデータです' });
