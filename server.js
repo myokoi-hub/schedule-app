@@ -322,7 +322,7 @@ app.get('/api/events/:id/calendar.ics', async (req, res) => {
   ].filter(Boolean).join('\r\n');
 
   res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-  res.setHeader('Content-Disposition', `inline; filename="event.ics"`);
+  res.setHeader('Content-Disposition', `attachment; filename="event.ics"`);
   res.send(ics);
 });
 

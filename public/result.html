@@ -253,10 +253,13 @@
           decidedBanner = `
             <div class="decided-banner">✅ 確定日: ${esc(decidedDate.date_label)}</div>
             <div style="text-align:center;margin:8px 0 4px">
-              <a href="/api/events/${eventId}/calendar.ics"
+              <a href="/api/events/${eventId}/calendar.ics" download="event.ics"
                 style="display:inline-flex;align-items:center;gap:6px;background:#5BAD4A;color:white;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:bold;text-decoration:none">
-                📅 カレンダーに追加
+                📅 カレンダーに追加（.ics）
               </a>
+              <p style="font-size:11px;color:#888;margin:6px 0 0">
+                ダウンロード後、Outlookの「参照」からファイルを選択 → 予定表を選択 → インポート
+              </p>
             </div>`;
         }
       }
