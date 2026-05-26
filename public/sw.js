@@ -1,4 +1,4 @@
-const CACHE = 'schedule-app-v11';
+const CACHE = 'schedule-app-v12';
 const ASSETS = ['/', '/index.html', '/event.html', '/result.html', '/events.html', '/style.css', '/manifest.json', '/icon-192.png', '/icon-512.png', '/schedule-icon.png'];
 
 self.addEventListener('install', e => {
