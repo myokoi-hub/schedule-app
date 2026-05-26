@@ -210,7 +210,8 @@ input[type="text"]:focus, textarea:focus {
   cursor: pointer;
   font-size: 18px;
   font-weight: 900;
-  -webkit-text-stroke: 3px currentColor;
+  -webkit-text-stroke: 1px currentColor;
+  text-shadow: 1px 0 0 currentColor, -1px 0 0 currentColor, 0 1px 0 currentColor, 0 -1px 0 currentColor;
   font-family: inherit;
   transition: all 0.15s;
   color: #999;
