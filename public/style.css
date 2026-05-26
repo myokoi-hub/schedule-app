@@ -500,9 +500,13 @@ input[type="text"]:focus, textarea:focus {
 
 /* 推奨バッジ（テーブル内） */
 .recommend-badge {
-  display: inline-block; background: #4CAF50; color: white;
-  font-size: 11px; padding: 2px 7px; border-radius: 10px;
+  display: inline-block;
+  background: linear-gradient(135deg, #F6D365, #F5A623);
+  color: #7A4800;
+  font-size: 11px; padding: 3px 9px; border-radius: 10px;
   font-weight: bold; margin-bottom: 3px;
+  box-shadow: 0 1px 4px rgba(245,166,35,0.5);
+  letter-spacing: 0.3px;
 }
 
 /* 締切日バッジ */
