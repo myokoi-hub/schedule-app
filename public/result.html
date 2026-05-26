@@ -121,12 +121,12 @@
       document.getElementById('shareCard').style.display = 'block';
 
       // メールデータをセット（モーダルで使う）
-      mailData.subject = `出欠確認のお願い: ${title}`;
-      mailData.body = `${title} の日程調整にご協力をお願いします。\n\n`
-        + `以下のURLから出欠をご入力ください。\n\n`
-        + `${shareUrl}\n\n`
+      mailData.subject = `日程のご相談`;
+      mailData.body = `「${title}」の日程を調整したくご連絡差し上げました。\n`
+        + `以下の候補日の中でご都合の良い日時をお知らせいただけますと幸いです。\n`
+        + `ご多忙中とは存じますが、何卒ご検討のほどよろしくお願いいたします。\n\n`
         + `候補日程:\n${dates.map(d => `・${d.date_label}`).join('\n')}\n\n`
-        + `よろしくお願いいたします。`;
+        + `${shareUrl}`;
 
       // participants & answer map
       const participants = [...new Set(responses.map(r => r.participant_name))];
