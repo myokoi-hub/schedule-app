@@ -171,10 +171,12 @@ input[type="text"]:focus, textarea:focus {
 }
 .result-table th:first-child { text-align: left; min-width: 90px; }
 .result-table td {
-  padding: 10px 12px;
+  padding: 10px 12px 6px;
   text-align: center;
+  vertical-align: middle;
   border-bottom: 1px solid #F0F0F0;
 }
+.result-table td svg { display: block; margin: 4px auto 0; }
 .result-table td:first-child { text-align: left; font-weight: bold; }
 .result-table tr:hover td { background: #F8FAFC; }
 .count-row td { background: #F0F8EE !important; font-weight: bold; font-size: 13px; }
