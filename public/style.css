@@ -208,7 +208,8 @@ input[type="text"]:focus, textarea:focus {
   border: 2px solid #ddd;
   background: white;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 18px;
+  font-weight: 900;
   font-family: inherit;
   transition: all 0.15s;
   color: #999;
