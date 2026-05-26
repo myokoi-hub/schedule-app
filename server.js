@@ -298,21 +298,32 @@ app.get('/api/events/:id/calendar.ics', async (req, res) => {
   if (new Date(year, month-1, day) < new Date(now.getFullYear(), now.getMonth(), now.getDate())) year++;
 
   const pad = n => String(n).padStart(2,'0');
-  const fmt = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  // JST (UTC+9) → UTC に変換してZサフィックスで出力
+  const fmtUtc = d => {
+    const u = new Date(d.getTime() - 9*60*60*1000);
+    return `${u.getUTCFullYear()}${pad(u.getUTCMonth()+1)}${pad(u.getUTCDate())}T${pad(u.getUTCHours())}${pad(u.getUTCMinutes())}00Z`;
+  };
   const dtStart = new Date(year, month-1, day, hour, min);
   const dtEnd   = new Date(year, month-1, day, hour+1, min);
+  const now2 = new Date();
+  const stamp = fmtUtc(now2);
 
   const ics = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0',
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
     'PRODID:-//Schedule App//Schedule App//EN',
-    'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'CALSCALE:GREGORIAN',
+    'METHOD:REQUEST',
     'BEGIN:VEVENT',
     `UID:${event.id}-${event.decided_date_id}@schedule-app`,
-    `DTSTART;TZID=Asia/Tokyo:${fmt(dtStart)}`,
-    `DTEND;TZID=Asia/Tokyo:${fmt(dtEnd)}`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART:${fmtUtc(dtStart)}`,
+    `DTEND:${fmtUtc(dtEnd)}`,
     `SUMMARY:${event.title.replace(/[,;\\]/g, s => '\\' + s)}`,
     event.description ? `DESCRIPTION:${event.description.replace(/\n/g,'\\n')}` : null,
-    'END:VEVENT', 'END:VCALENDAR'
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR'
   ].filter(Boolean).join('\r\n');
 
   res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
