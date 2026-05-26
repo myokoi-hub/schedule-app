@@ -194,36 +194,33 @@ input[type="text"]:focus, textarea:focus {
 }
 .avail-table th:first-child { text-align: left; min-width: 140px; }
 .avail-table td {
-  padding: 8px 6px;
+  padding: 10px 6px 6px;
   text-align: center;
   border-bottom: 1px solid #F0F0F0;
+  vertical-align: middle;
 }
 .avail-table td:first-child { text-align: left; white-space: nowrap; }
 
-.avail-btn-group { display: flex; gap: 6px; justify-content: center; }
+.avail-btn-group { display: flex; gap: 8px; justify-content: center; align-items: center; }
 .avail-btn {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  border: 2px solid #ddd;
-  background: white;
+  border: none;
+  background: transparent;
   cursor: pointer;
-  font-size: 18px;
-  font-weight: 900;
-  font-family: inherit;
-  transition: all 0.15s;
-  color: #999;
+  padding: 4px;
+  transition: opacity 0.15s, transform 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-.avail-btn[data-val="○"] { border-color: #B3D9AE; }
-.avail-btn[data-val="△"] { border-color: #F4A261; }
-.avail-btn[data-val="×"] { border-color: #E63946; }
-.avail-btn:hover { opacity: 0.75; }
-.avail-btn.selected-maru  { background: #5BAD4A; border-color: #5BAD4A; }
-.avail-btn.selected-maru svg circle { stroke: white; }
-.avail-btn.selected-sankaku { background: #F4A261; border-color: #F4A261; }
-.avail-btn.selected-sankaku svg polygon { stroke: white; }
-.avail-btn.selected-batsu  { background: #E63946; border-color: #E63946; }
-.avail-btn.selected-batsu svg line { stroke: white; }
+.avail-btn:hover { opacity: 0.7; }
+.avail-btn.selected-maru  { transform: scale(1.2); }
+.avail-btn.selected-maru svg circle { stroke: #5BAD4A; stroke-width: 5; }
+.avail-btn.selected-sankaku { transform: scale(1.2); }
+.avail-btn.selected-sankaku svg polygon { stroke: #F4A261; stroke-width: 5; }
+.avail-btn.selected-batsu  { transform: scale(1.2); }
+.avail-btn.selected-batsu svg line { stroke: #E63946; stroke-width: 5; }
 
 /* Mark colors */
 .m-maru    { color: #2E86AB; font-weight: 900; font-size: 20px; }
