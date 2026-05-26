@@ -364,10 +364,6 @@
       if (!confirm(`${emails.length}名に確定日の案内メールを送りますか？\n\n宛先: ${emails.join(', ')}`)) return;
 
       const icsUrl = `${location.origin}/api/events/${eventId}/calendar.ics`;
-      const dt = parseJpDate(dateLabel);
-      const outlookUrl = dt
-        ? `https://outlook.office.com/calendar/deeplink/compose?subject=${encodeURIComponent(currentTitle)}&startdt=${encodeURIComponent(dt.start)}&enddt=${encodeURIComponent(dt.end)}`
-        : null;
 
       const subject = encodeURIComponent(`日程確定のお知らせ`);
       const body = encodeURIComponent(
@@ -376,8 +372,7 @@
         `【日時】${dateLabel}\n\n` +
         `当日はよろしくお願いいたします。\n\n` +
         `＊ カレンダーに追加 ＊\n` +
-        (outlookUrl ? `Outlook: ${outlookUrl}\n` : '') +
-        `その他（Apple / Google等）: ${icsUrl}`
+        `${icsUrl}`
       );
       window.location.href = `mailto:${emails.join(',')}?subject=${subject}&body=${body}`;
     }
