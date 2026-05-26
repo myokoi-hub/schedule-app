@@ -96,12 +96,13 @@
 
     function select(btn) {
       const dateId = btn.dataset.date;
+      const cls = btn.dataset.val === '○' ? 'selected-maru'
+                : btn.dataset.val === '△' ? 'selected-sankaku' : 'selected-batsu';
+      const isSelected = btn.classList.contains(cls);
       document.querySelectorAll(`.avail-btn[data-date="${dateId}"]`).forEach(b => {
         b.classList.remove('selected-maru', 'selected-sankaku', 'selected-batsu');
       });
-      const cls = btn.dataset.val === '○' ? 'selected-maru'
-                : btn.dataset.val === '△' ? 'selected-sankaku' : 'selected-batsu';
-      btn.classList.add(cls);
+      if (!isSelected) btn.classList.add(cls);
     }
 
     async function submit() {
