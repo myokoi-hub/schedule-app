@@ -121,10 +121,17 @@
       document.getElementById('shareCard').style.display = 'block';
 
       // メールデータをセット（モーダルで使う）
-      mailData.subject = `日程のご相談`;
-      mailData.body = `「${title}」の日程を調整したくご連絡差し上げました。\n`
+      const deadlineStr = deadline ? (() => {
+        const d = new Date(deadline + 'T00:00:00');
+        const days = ['日','月','火','水','木','金','土'];
+        return `${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
+      })() : '';
+      mailData.subject = `日程調整のお願い`;
+      mailData.body = `お疲れ様です。\n`
+        + `【${title}】の日程調整をお願いしたくご連絡いたしました。\n`
         + `以下の候補日の中でご都合の良い日時をお知らせいただけますと幸いです。\n`
-        + `ご多忙中とは存じますが、何卒ご検討のほどよろしくお願いいたします。\n\n`
+        + `お手数をおかけしますが、よろしくお願いいたします。\n\n`
+        + (deadlineStr ? `【回答締切日】　${deadlineStr}\n\n` : '')
         + `候補日程:\n${dates.map(d => `・${d.date_label}`).join('\n')}\n\n`
         + `${shareUrl}`;
 
