@@ -13,7 +13,10 @@
   <header class="header">
     <a class="header-back" onclick="history.back();return false;" href="/">← 戻る</a>
     <h1><a href="/" style="color:white;text-decoration:none;display:inline-flex;align-items:center;gap:8px"><img src="/schedule-icon.png" style="width:32px;height:32px;object-fit:contain;border-radius:6px">スケジュール調整</a></h1>
-    <nav class="header-nav"><a href="/">🏠 ホーム</a></nav>
+    <nav class="header-nav">
+      <span id="userArea" style="display:inline-flex;align-items:center;gap:6px"></span>
+      <a href="/">🏠 ホーム</a>
+    </nav>
   </header>
 
   <div class="container">
@@ -89,6 +92,32 @@
   <script>
     const params = new URLSearchParams(location.search);
     const eventId = params.get('id');
+
+    // ---- 認証状態 ----
+    let authState = { loggedIn: false, oauthEnabled: false, name: '' };
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/auth/me');
+        authState = await res.json();
+      } catch {}
+      renderAuthStatus();
+    }
+
+    function renderAuthStatus() {
+      const el = document.getElementById('userArea');
+      if (!el || !authState.oauthEnabled) return;
+      if (authState.loggedIn) {
+        el.innerHTML =
+          `<span style="color:white;font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(authState.name)}</span>`+
+          `<a href="/auth/logout" style="color:rgba(255,255,255,0.75);font-size:11px;white-space:nowrap;text-decoration:underline">ログアウト</a>`;
+      } else {
+        el.innerHTML =
+          `<a href="/auth/login?returnTo=${encodeURIComponent(location.pathname+location.search)}"
+            style="color:white;background:rgba(255,255,255,0.22);padding:4px 10px;border-radius:12px;font-size:12px;text-decoration:none;white-space:nowrap">
+            Microsoftでログイン</a>`;
+      }
+    }
 
     // メールデータ（render()後にセット）
     const mailData = { subject: '', body: '', selected: [] };
@@ -250,16 +279,30 @@
       if (decided_date_id != null) {
         const decidedDate = dates.find(d => d.id == decided_date_id);
         if (decidedDate) {
+          const outlookBtn = authState.loggedIn
+            ? `<button onclick="resendCalendar(${decided_date_id})"
+                style="display:inline-flex;align-items:center;gap:6px;background:#0078D4;color:white;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:bold;border:none;cursor:pointer;margin-bottom:6px">
+                📅 Outlookに会議招待を送信
+               </button>
+               <p style="font-size:11px;color:#888;margin:0 0 8px">招待済みの全員に会議招待メールが届きます</p>`
+            : (authState.oauthEnabled
+                ? `<a href="/auth/login?returnTo=${encodeURIComponent(location.pathname+'?id='+eventId)}"
+                    style="display:inline-flex;align-items:center;gap:6px;background:#0078D4;color:white;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:bold;text-decoration:none;margin-bottom:6px">
+                    Microsoftでログインして自動送信
+                   </a>
+                   <p style="font-size:11px;color:#888;margin:0 0 8px">ログイン後、Outlookに会議招待を自動送信できます</p>`
+                : '');
           decidedBanner = `
             <div class="decided-banner">✅ 確定日: ${esc(decidedDate.date_label)}</div>
-            <div style="text-align:center;margin:8px 0 4px">
-              <a href="/api/events/${eventId}/calendar.ics" download="event.ics"
-                style="display:inline-flex;align-items:center;gap:6px;background:#5BAD4A;color:white;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:bold;text-decoration:none">
-                📅 カレンダーに追加（.ics）
-              </a>
-              <p style="font-size:11px;color:#888;margin:6px 0 0">
-                ダウンロード後、Outlookの「参照」からファイルを選択 → 予定表を選択 → インポート
-              </p>
+            <div style="text-align:center;margin:8px 0 12px">
+              ${outlookBtn}
+              <div>
+                <a href="/api/events/${eventId}/calendar.ics" download="event.ics"
+                  style="display:inline-flex;align-items:center;gap:6px;background:#5BAD4A;color:white;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:bold;text-decoration:none">
+                  📥 .icsをダウンロード
+                </a>
+                <p style="font-size:11px;color:#888;margin:4px 0 0">ダウンロードしたファイルをダブルクリックでOutlookに追加</p>
+              </div>
             </div>`;
         }
       }
@@ -340,8 +383,34 @@
           body: JSON.stringify({ date_id: isCancel ? null : dateId })
         });
         if (!res.ok) throw new Error();
-        load();
-        if (!isCancel) sendDecideNotification(dateLabel);
+        const result = await res.json();
+        await load();
+        if (!isCancel) {
+          if (result.calendarCreated) {
+            showToast('📅 Outlookに会議招待を送信しました！');
+          }
+          sendDecideNotification(dateLabel);
+        }
+      } catch {
+        showToast('エラーが発生しました');
+      }
+    }
+
+    // ---- Outlook再送信 ----
+    async function resendCalendar(dateId) {
+      if (!confirm('招待済みの全員にOutlook会議招待を送信しますか？')) return;
+      try {
+        const res = await fetch(`/api/events/${eventId}/decide`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date_id: dateId })
+        });
+        const result = await res.json();
+        if (result.calendarCreated) {
+          showToast('📅 Outlook会議招待を送信しました！');
+        } else {
+          showToast('⚠️ 送信に失敗しました。ログイン状態を確認してください');
+        }
       } catch {
         showToast('エラーが発生しました');
       }
@@ -581,7 +650,7 @@
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    load();
+    checkAuth().then(() => load());
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
   </script>
 </body>
