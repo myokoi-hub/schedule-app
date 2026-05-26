@@ -366,7 +366,7 @@
       const icsUrl = `${location.origin}/api/events/${eventId}/calendar.ics`;
       const dt = parseJpDate(dateLabel);
       const outlookUrl = dt
-        ? `https://outlook.live.com/calendar/0/addevent?subject=${encodeURIComponent(currentTitle)}&startdt=${dt.start}&enddt=${dt.end}`
+        ? `https://outlook.office.com/calendar/0/addevent?subject=${encodeURIComponent(currentTitle)}&startdt=${dt.start}&enddt=${dt.end}`
         : null;
 
       const subject = encodeURIComponent(`日程確定のお知らせ`);
