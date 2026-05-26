@@ -181,7 +181,7 @@
           return `
             <tr${isRec ? ' style="background:#F0FFF4"' : ''}>
               <td style="text-align:left;padding:8px 10px;white-space:nowrap">
-                ${isRec ? '<div><span class="recommend-badge">☆推奨</span></div>' : ''}
+                ${isRec ? '<div><span class="recommend-badge">🏆 推奨</span></div>' : ''}
                 <div style="font-weight:bold;font-size:13px;line-height:1.4">${(() => { const m = d.date_label.match(/^(.+?)\s(\d{1,2}:\d{2}.*)$/); return m ? `${esc(m[1])}<br><span style="font-weight:normal;font-size:12px;color:#666">${esc(m[2])}</span>` : esc(d.date_label); })()}</div>
               </td>
               <td style="text-align:center;padding:8px 8px">
