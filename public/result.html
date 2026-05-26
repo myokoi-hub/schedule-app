@@ -250,7 +250,14 @@
       if (decided_date_id != null) {
         const decidedDate = dates.find(d => d.id == decided_date_id);
         if (decidedDate) {
-          decidedBanner = `<div class="decided-banner">✅ 確定日: ${esc(decidedDate.date_label)}</div>`;
+          decidedBanner = `
+            <div class="decided-banner">✅ 確定日: ${esc(decidedDate.date_label)}</div>
+            <div style="text-align:center;margin:8px 0 4px">
+              <a href="/api/events/${eventId}/calendar.ics" download
+                style="display:inline-flex;align-items:center;gap:6px;background:#5BAD4A;color:white;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:bold;text-decoration:none">
+                📅 カレンダーに追加
+              </a>
+            </div>`;
         }
       }
 
