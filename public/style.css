@@ -217,11 +217,11 @@ input[type="text"]:focus, textarea:focus {
   justify-content: center;
 }
 .avail-btn:hover { opacity: 0.7; }
-.avail-btn.selected-maru  { transform: scale(1.2); }
+.avail-btn.selected-maru  { transform: scale(1.2); background: #E8F5E9; border-radius: 50%; }
 .avail-btn.selected-maru svg circle { stroke: #5BAD4A; stroke-width: 5; }
-.avail-btn.selected-sankaku { transform: scale(1.2); }
+.avail-btn.selected-sankaku { transform: scale(1.2); background: #FFF3E0; border-radius: 50%; }
 .avail-btn.selected-sankaku svg polygon { stroke: #F4A261; stroke-width: 5; }
-.avail-btn.selected-batsu  { transform: scale(1.2); }
+.avail-btn.selected-batsu  { transform: scale(1.2); background: #FFEBEE; border-radius: 50%; }
 .avail-btn.selected-batsu svg line { stroke: #E63946; stroke-width: 5; }
 
 /* Mark colors */
