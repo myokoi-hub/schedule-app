@@ -345,11 +345,12 @@
       }
       if (!confirm(`${emails.length}名に確定日の案内メールを送りますか？\n\n宛先: ${emails.join(', ')}`)) return;
 
-      const subject = encodeURIComponent(`【確定】${currentTitle} の日程確定のお知らせ`);
+      const subject = encodeURIComponent(`日程の確定のお知らせ`);
       const body = encodeURIComponent(
-        `${currentTitle} の日程が確定しました。\n\n` +
-        `確定日: ${dateLabel}\n\n` +
-        `ご参加をよろしくお願いいたします。`
+        `お疲れ様です。\n` +
+        `【${currentTitle}】の日程が確定しましたのでご案内いたします。\n\n` +
+        `【日時】${dateLabel}\n\n` +
+        `当日はよろしくお願いいたします。`
       );
       window.location.href = `mailto:${emails.join(',')}?subject=${subject}&body=${body}`;
     }
