@@ -373,16 +373,12 @@
       }
       if (!confirm(`${emails.length}名に確定日の案内メールを送りますか？\n\n宛先: ${emails.join(', ')}`)) return;
 
-      const icsUrl = `${location.origin}/api/events/${eventId}/calendar.ics`;
-
       const subject = encodeURIComponent(`日程確定のお知らせ`);
       const body = encodeURIComponent(
         `お疲れ様です。\n` +
         `【${currentTitle}】の日程が確定しましたのでご案内いたします。\n\n` +
         `【日時】${dateLabel}\n\n` +
-        `当日はよろしくお願いいたします。\n\n` +
-        `＊ カレンダーに追加 ＊\n` +
-        `${icsUrl}`
+        `当日はよろしくお願いいたします。`
       );
       window.location.href = `mailto:${emails.join(',')}?subject=${subject}&body=${body}`;
     }
