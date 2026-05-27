@@ -22,20 +22,18 @@ const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'スケジュール調整';
 
-// Microsoft Graph API でメール送信（SMTP不要・HTTPS使用）
+// Microsoft Graph API でメール送信（client_credentials フロー・MFA対応）
 async function getSmtpAccessToken() {
-  if (!AZURE_TENANT_ID || !AZURE_CLIENT_ID || !AZURE_CLIENT_SECRET || !SMTP_USER || !SMTP_PASS) {
-    console.error('Graph token: 環境変数が不足しています');
+  if (!AZURE_TENANT_ID || !AZURE_CLIENT_ID || !AZURE_CLIENT_SECRET) {
+    console.error('Graph token: 環境変数が不足しています (AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET)');
     return null;
   }
   try {
     const params = new URLSearchParams({
       client_id:     AZURE_CLIENT_ID,
       client_secret: AZURE_CLIENT_SECRET,
-      username:      SMTP_USER,
-      password:      SMTP_PASS,
-      scope:         'https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/User.Read',
-      grant_type:    'password'
+      scope:         'https://graph.microsoft.com/.default',
+      grant_type:    'client_credentials'
     });
     const res = await fetch(`https://login.microsoftonline.com/${AZURE_TENANT_ID}/oauth2/v2.0/token`, {
       method: 'POST',
@@ -47,7 +45,7 @@ async function getSmtpAccessToken() {
       console.error('Graph token エラー:', data.error, data.error_description);
       return null;
     }
-    console.log('Graph token 取得成功');
+    console.log('Graph token 取得成功 (client_credentials)');
     return data.access_token || null;
   } catch (e) {
     console.error('Graph token 例外:', e.message);
@@ -567,7 +565,7 @@ app.get('/auth/logout', async (req, res) => {
 // ======== イベント API ========
 
 app.get('/api/ping', (req, res) => {
-  res.json({ version: 22, deployed: new Date().toISOString() });
+  res.json({ version: 23, deployed: new Date().toISOString() });
 });
 
 app.get('/api/events', async (req, res) => {
