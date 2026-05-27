@@ -158,8 +158,6 @@
         if (!el || !auth.oauthEnabled) return;
         if (auth.loggedIn) {
           el.innerHTML = `<span style="color:white;font-size:12px">${auth.name}</span><a href="/auth/logout" style="color:rgba(255,255,255,0.75);font-size:11px;text-decoration:underline">ログアウト</a>`;
-        } else {
-          el.innerHTML = `<a href="/auth/login" style="color:white;background:rgba(255,255,255,0.22);padding:4px 10px;border-radius:12px;font-size:12px;text-decoration:none">Microsoftでログイン</a>`;
         }
       } catch {}
     })();

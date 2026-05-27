@@ -169,11 +169,6 @@
         el.innerHTML =
           `<span style="color:white;font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(authState.name)}</span>`+
           `<a href="/auth/logout" style="color:rgba(255,255,255,0.75);font-size:11px;white-space:nowrap;text-decoration:underline">ログアウト</a>`;
-      } else {
-        el.innerHTML =
-          `<a href="/auth/login?returnTo=${encodeURIComponent(location.pathname+location.search)}"
-            style="color:white;background:rgba(255,255,255,0.22);padding:4px 10px;border-radius:12px;font-size:12px;text-decoration:none;white-space:nowrap">
-            Microsoftでログイン</a>`;
       }
     }
 
@@ -337,31 +332,8 @@
       if (decided_date_id != null) {
         const decidedDate = dates.find(d => d.id == decided_date_id);
         if (decidedDate) {
-          const outlookBtn = authState.loggedIn
-            ? `<button onclick="resendCalendar(${decided_date_id})"
-                style="display:inline-flex;align-items:center;gap:6px;background:#0078D4;color:white;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:bold;border:none;cursor:pointer;margin-bottom:6px">
-                📅 Outlookに会議招待を送信
-               </button>
-               <p style="font-size:11px;color:#888;margin:0 0 8px">招待済みの全員に会議招待メールが届きます</p>`
-            : (authState.oauthEnabled
-                ? `<a href="/auth/login?returnTo=${encodeURIComponent(location.pathname+'?id='+eventId)}"
-                    style="display:inline-flex;align-items:center;gap:6px;background:#0078D4;color:white;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:bold;text-decoration:none;margin-bottom:6px">
-                    Microsoftでログインして自動送信
-                   </a>
-                   <p style="font-size:11px;color:#888;margin:0 0 8px">ログイン後、Outlookに会議招待を自動送信できます</p>`
-                : '');
           decidedBanner = `
-            <div class="decided-banner">✅ 確定日: ${esc(decidedDate.date_label)}</div>
-            <div style="text-align:center;margin:8px 0 12px">
-              ${outlookBtn}
-              <div>
-                <a href="/api/events/${eventId}/calendar.ics" download="event.ics"
-                  style="display:inline-flex;align-items:center;gap:6px;background:#5BAD4A;color:white;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:bold;text-decoration:none">
-                  📥 .icsをダウンロード
-                </a>
-                <p style="font-size:11px;color:#888;margin:4px 0 0">ダウンロードしたファイルをダブルクリックでOutlookに追加</p>
-              </div>
-            </div>`;
+            <div class="decided-banner">✅ 確定日: ${esc(decidedDate.date_label)}</div>`;
         }
       }
 
