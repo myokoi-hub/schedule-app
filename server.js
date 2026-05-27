@@ -22,16 +22,55 @@ const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'スケジュール調整';
 
-function getSmtpTransporter() {
-  if (!SMTP_USER || !SMTP_PASS) return null;
-  return nodemailer.createTransport({
-    host: 'smtp.office365.com',
-    port: 587,
-    secure: false,
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
-    tls: { rejectUnauthorized: false },
-    family: 4  // IPv4強制（RailwayのIPv6接続エラー回避）
+// Microsoft Graph API でメール送信（SMTP不要・HTTPS使用）
+async function getSmtpAccessToken() {
+  if (!AZURE_TENANT_ID || !AZURE_CLIENT_ID || !AZURE_CLIENT_SECRET || !SMTP_USER || !SMTP_PASS) return null;
+  try {
+    const params = new URLSearchParams({
+      client_id:     AZURE_CLIENT_ID,
+      client_secret: AZURE_CLIENT_SECRET,
+      username:      SMTP_USER,
+      password:      SMTP_PASS,
+      scope:         'https://graph.microsoft.com/.default',
+      grant_type:    'password'
+    });
+    const res = await fetch(`https://login.microsoftonline.com/${AZURE_TENANT_ID}/oauth2/v2.0/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    });
+    const data = await res.json();
+    return data.access_token || null;
+  } catch (e) {
+    console.error('Graph token error:', e.message);
+    return null;
+  }
+}
+
+async function sendMailViaGraph({ accessToken, from, recipients, subject, bodyText, icsContent }) {
+  const toRecipients = recipients.map(r => ({ emailAddress: { address: r.email, name: r.name || r.email } }));
+  const message = {
+    subject,
+    body: { contentType: 'Text', content: bodyText },
+    toRecipients,
+    ...(icsContent ? {
+      attachments: [{
+        '@odata.type': '#microsoft.graph.fileAttachment',
+        name: 'invite.ics',
+        contentType: 'text/calendar; method=REQUEST',
+        contentBytes: Buffer.from(icsContent).toString('base64')
+      }]
+    } : {})
+  };
+  const res = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(from)}/sendMail`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, saveToSentItems: false })
   });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Graph sendMail failed: ${res.status} ${err}`);
+  }
 }
 
 function parseJpDateSrv(label) {
@@ -516,7 +555,7 @@ app.get('/auth/logout', async (req, res) => {
 // ======== イベント API ========
 
 app.get('/api/ping', (req, res) => {
-  res.json({ version: 19, deployed: new Date().toISOString() });
+  res.json({ version: 22, deployed: new Date().toISOString() });
 });
 
 app.get('/api/events', async (req, res) => {
@@ -727,20 +766,14 @@ app.post('/api/events/:id/send-invite', async (req, res) => {
   if (!subject || !Array.isArray(recipients) || recipients.length === 0) {
     return res.status(400).json({ error: '件名と送信先は必須です' });
   }
-  const transporter = getSmtpTransporter();
-  if (!transporter) {
-    return res.status(503).json({ error: 'メール送信が未設定です。管理者に連絡してください。' });
-  }
+  if (!SMTP_USER) return res.status(503).json({ error: 'メール送信が未設定です' });
   try {
-    await transporter.sendMail({
-      from: `"${SMTP_FROM_NAME}" <${SMTP_USER}>`,
-      to: recipients.map(r => r.name ? `"${r.name}" <${r.email}>` : r.email).join(', '),
-      subject,
-      text: body || ''
-    });
+    const token = await getSmtpAccessToken();
+    if (!token) return res.status(503).json({ error: 'メール認証に失敗しました。SMTP_USER/PASSを確認してください。' });
+    await sendMailViaGraph({ accessToken: token, from: SMTP_USER, recipients, subject, bodyText: body || '' });
     res.json({ ok: true, sent: recipients.length });
   } catch (err) {
-    console.error('SMTP invite error:', err);
+    console.error('Graph invite error:', err.message);
     res.status(500).json({ error: `送信失敗: ${err.message}` });
   }
 });
@@ -751,22 +784,15 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
   if (!subject || !Array.isArray(recipients) || recipients.length === 0) {
     return res.status(400).json({ error: '件名と送信先は必須です' });
   }
-  const transporter = getSmtpTransporter();
-  if (!transporter) {
-    return res.status(503).json({ error: 'メール送信が未設定です。管理者に連絡してください。' });
-  }
+  if (!SMTP_USER) return res.status(503).json({ error: 'メール送信が未設定です' });
 
   const dateTime = date_label ? parseJpDateSrv(date_label) : null;
   let icsContent = null;
-  if (dateTime && SMTP_USER) {
+  if (dateTime) {
     const uid = `${req.params.id}-${Date.now()}@schedule-app`;
     icsContent = generateICS({
-      uid,
-      title: subject,
-      location: location || '',
-      description: memo || '',
-      dtstart: dateTime.start,
-      dtend: dateTime.end,
+      uid, title: subject, location: location || '', description: memo || '',
+      dtstart: dateTime.start, dtend: dateTime.end,
       organizer: SMTP_USER,
       attendees: recipients.map(r => ({ name: r.name || r.email, email: r.email }))
     });
@@ -776,25 +802,16 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
   if (date_label) bodyLines.push(`日時: ${date_label}`);
   if (location)   bodyLines.push(`場所: ${location}`);
   if (memo)       { bodyLines.push(''); bodyLines.push(memo); }
-  if (icsContent) bodyLines.push('\n※添付ファイルを開くとOutlookの予定表に追加できます。');
+  if (icsContent) bodyLines.push('\n※このメールにカレンダー招待が含まれています。承諾するとOutlookの予定表に追加されます。');
   const bodyText = bodyLines.join('\n');
 
   try {
-    await transporter.sendMail({
-      from: `"${SMTP_FROM_NAME}" <${SMTP_USER}>`,
-      to: recipients.map(r => r.name ? `"${r.name}" <${r.email}>` : r.email).join(', '),
-      subject,
-      text: bodyText,
-      ...(icsContent ? {
-        alternatives: [{
-          contentType: 'text/calendar; charset=utf-8; method=REQUEST',
-          content: Buffer.from(icsContent)
-        }]
-      } : {})
-    });
+    const token = await getSmtpAccessToken();
+    if (!token) return res.status(503).json({ error: 'メール認証に失敗しました' });
+    await sendMailViaGraph({ accessToken: token, from: SMTP_USER, recipients, subject, bodyText, icsContent });
     res.json({ ok: true, sent: recipients.length });
   } catch (err) {
-    console.error('SMTP send error:', err);
+    console.error('Graph confirm error:', err.message);
     res.status(500).json({ error: `送信失敗: ${err.message}` });
   }
 });
