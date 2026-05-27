@@ -388,11 +388,12 @@ input[type="text"]:focus, textarea:focus {
 
 @media (max-width: 480px) {
   .header { padding: 10px 12px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; text-align: left; gap: 8px; }
-  .header h1 { font-size: 15px; white-space: nowrap; flex-shrink: 0; }
+  .header h1 { font-size: 14px; white-space: nowrap; word-break: keep-all; flex-shrink: 0; }
+  .header h1 img { width: 24px !important; height: 24px !important; }
   .header-back { position: static; transform: none; font-size: 13px; padding: 4px 6px; font-weight: bold; flex-shrink: 0; }
-  .header-nav { position: static; transform: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  .header-nav { position: static; transform: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
   .header-nav a { font-size: 11px; padding: 3px 6px; white-space: nowrap; }
-  .header-nav span { font-size: 11px; }
+  .header-nav span { font-size: 11px; white-space: nowrap; }
 }
 
 /* ===== モーダル ===== */
