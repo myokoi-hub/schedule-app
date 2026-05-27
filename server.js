@@ -446,6 +446,10 @@ app.get('/auth/logout', async (req, res) => {
 
 // ======== イベント API ========
 
+app.get('/api/ping', (req, res) => {
+  res.json({ version: 19, deployed: new Date().toISOString() });
+});
+
 app.get('/api/events', async (req, res) => {
   const events = await getEvents();
   const summary = events.map(e => {
