@@ -301,6 +301,15 @@ function writeLocalData(data) {
 // ---- ミドルウェア ----
 app.use(express.json());
 app.use(cookieParser());
+// HTMLファイルはキャッシュさせない
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html') || req.path === '/') {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ---- 管理者認証 ----
