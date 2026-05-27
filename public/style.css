@@ -387,11 +387,12 @@ input[type="text"]:focus, textarea:focus {
 .header-nav a:hover { background: rgba(255,255,255,0.2); }
 
 @media (max-width: 480px) {
-  .header { padding: 12px 12px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; text-align: left; }
-  .header h1 { font-size: 16px; }
-  .header-back { position: static; transform: none; font-size: 14px; padding: 4px 6px; font-weight: bold; }
-  .header-nav { position: static; transform: none; }
-  .header-nav a { font-size: 15px; padding: 4px 8px; font-weight: bold; }
+  .header { padding: 10px 12px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; text-align: left; gap: 8px; }
+  .header h1 { font-size: 15px; white-space: nowrap; flex-shrink: 0; }
+  .header-back { position: static; transform: none; font-size: 13px; padding: 4px 6px; font-weight: bold; flex-shrink: 0; }
+  .header-nav { position: static; transform: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  .header-nav a { font-size: 11px; padding: 3px 6px; white-space: nowrap; }
+  .header-nav span { font-size: 11px; }
 }
 
 /* ===== モーダル ===== */
