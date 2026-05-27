@@ -301,16 +301,29 @@ function writeLocalData(data) {
 // ---- ミドルウェア ----
 app.use(express.json());
 app.use(cookieParser());
-// HTML・SW・CSSはキャッシュさせない（常に最新を返す）
-app.use((req, res, next) => {
-  if (req.path.endsWith('.html') || req.path === '/' ||
-      req.path === '/sw.js' || req.path.endsWith('.css')) {
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-  }
-  next();
+
+// HTMLファイルを動的ルートで配信（Railwayキャッシュ回避）
+const NO_CACHE = {
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0'
+};
+const HTML_PAGES = {
+  '/':              'index.html',
+  '/index.html':    'index.html',
+  '/event.html':    'event.html',
+  '/result.html':   'result.html',
+  '/events.html':   'events.html',
+  '/contacts.html': 'contacts.html',
+  '/sw.js':         'sw.js',
+};
+Object.entries(HTML_PAGES).forEach(([route, file]) => {
+  app.get(route, (req, res) => {
+    res.set(NO_CACHE);
+    res.sendFile(path.join(__dirname, 'public', file));
+  });
 });
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ---- 管理者認証 ----
