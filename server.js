@@ -565,7 +565,7 @@ app.get('/auth/logout', async (req, res) => {
 // ======== イベント API ========
 
 app.get('/api/ping', (req, res) => {
-  res.json({ version: 24, deployed: new Date().toISOString() });
+  res.json({ version: 25, deployed: new Date().toISOString() });
 });
 
 app.get('/api/events', async (req, res) => {
@@ -808,13 +808,9 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
         emailAddress: { address: r.email, name: r.name || r.email },
         type: 'required'
       }));
-      const bodyParts = [];
-      if (memo) bodyParts.push(memo);
-      if (date_label) bodyParts.push(`日時: ${date_label}`);
-      if (location) bodyParts.push(`場所: ${location}`);
       const graphEvent = {
         subject,
-        body: { contentType: 'Text', content: bodyParts.join('\n') },
+        body: { contentType: 'Text', content: memo || '' },
         start: { dateTime: dateTime.start, timeZone: 'Asia/Tokyo' },
         end:   { dateTime: dateTime.end,   timeZone: 'Asia/Tokyo' },
         attendees,
