@@ -720,6 +720,30 @@ app.get('/api/events/:id/calendar.ics', async (req, res) => {
   res.send(ics);
 });
 
+// ---- 日程調整招待メール送信 ----
+app.post('/api/events/:id/send-invite', async (req, res) => {
+  const { subject, body, recipients } = req.body;
+  if (!subject || !Array.isArray(recipients) || recipients.length === 0) {
+    return res.status(400).json({ error: '件名と送信先は必須です' });
+  }
+  const transporter = getSmtpTransporter();
+  if (!transporter) {
+    return res.status(503).json({ error: 'メール送信が未設定です。管理者に連絡してください。' });
+  }
+  try {
+    await transporter.sendMail({
+      from: `"${SMTP_FROM_NAME}" <${SMTP_USER}>`,
+      to: recipients.map(r => r.name ? `"${r.name}" <${r.email}>` : r.email).join(', '),
+      subject,
+      text: body || ''
+    });
+    res.json({ ok: true, sent: recipients.length });
+  } catch (err) {
+    console.error('SMTP invite error:', err);
+    res.status(500).json({ error: `送信失敗: ${err.message}` });
+  }
+});
+
 // ---- 確定メール送信 ----
 app.post('/api/events/:id/send-confirm', async (req, res) => {
   const { subject, location, memo, recipients, date_label } = req.body;
