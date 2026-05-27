@@ -565,7 +565,7 @@ app.get('/auth/logout', async (req, res) => {
 // ======== イベント API ========
 
 app.get('/api/ping', (req, res) => {
-  res.json({ version: 23, deployed: new Date().toISOString() });
+  res.json({ version: 24, deployed: new Date().toISOString() });
 });
 
 app.get('/api/events', async (req, res) => {
@@ -796,29 +796,52 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
   }
   if (!SMTP_USER) return res.status(503).json({ error: 'メール送信が未設定です' });
 
-  const dateTime = date_label ? parseJpDateSrv(date_label) : null;
-  let icsContent = null;
-  if (dateTime) {
-    const uid = `${req.params.id}-${Date.now()}@schedule-app`;
-    icsContent = generateICS({
-      uid, title: subject, location: location || '', description: memo || '',
-      dtstart: dateTime.start, dtend: dateTime.end,
-      organizer: SMTP_USER,
-      attendees: recipients.map(r => ({ name: r.name || r.email, email: r.email }))
-    });
-  }
-
-  const bodyLines = [`【${subject}】の日程が確定しました。`, ''];
-  if (date_label) bodyLines.push(`日時: ${date_label}`);
-  if (location)   bodyLines.push(`場所: ${location}`);
-  if (memo)       { bodyLines.push(''); bodyLines.push(memo); }
-  if (icsContent) bodyLines.push('\n※このメールにカレンダー招待が含まれています。承諾するとOutlookの予定表に追加されます。');
-  const bodyText = bodyLines.join('\n');
-
   try {
     const token = await getSmtpAccessToken();
     if (!token) return res.status(503).json({ error: 'メール認証に失敗しました' });
-    await sendMailViaGraph({ accessToken: token, from: SMTP_USER, recipients, subject, bodyText, icsContent });
+
+    const dateTime = date_label ? parseJpDateSrv(date_label) : null;
+
+    if (dateTime) {
+      // Calendar Events API で正式な会議出席依頼を送信（Outlookに承諾/仮承諾/辞退ボタン表示）
+      const attendees = recipients.map(r => ({
+        emailAddress: { address: r.email, name: r.name || r.email },
+        type: 'required'
+      }));
+      const bodyParts = [];
+      if (memo) bodyParts.push(memo);
+      if (date_label) bodyParts.push(`日時: ${date_label}`);
+      if (location) bodyParts.push(`場所: ${location}`);
+      const graphEvent = {
+        subject,
+        body: { contentType: 'Text', content: bodyParts.join('\n') },
+        start: { dateTime: dateTime.start, timeZone: 'Asia/Tokyo' },
+        end:   { dateTime: dateTime.end,   timeZone: 'Asia/Tokyo' },
+        attendees,
+        ...(location ? { location: { displayName: location } } : {})
+      };
+      console.log('Graph createEvent 送信先:', recipients.map(r => r.email).join(', '));
+      const evRes = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(SMTP_USER)}/events`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(graphEvent)
+      });
+      console.log('Graph createEvent ステータス:', evRes.status);
+      if (!evRes.ok) {
+        const err = await evRes.text();
+        console.error('Graph createEvent エラー:', err);
+        throw new Error(`Graph createEvent failed: ${evRes.status} ${err}`);
+      }
+      console.log('Graph createEvent 成功（会議出席依頼送信済み）');
+    } else {
+      // 日時が解析できない場合は通常メール送信
+      const bodyLines = [`【${subject}】の日程が確定しました。`, ''];
+      if (date_label) bodyLines.push(`日時: ${date_label}`);
+      if (location)   bodyLines.push(`場所: ${location}`);
+      if (memo)       { bodyLines.push(''); bodyLines.push(memo); }
+      await sendMailViaGraph({ accessToken: token, from: SMTP_USER, recipients, subject, bodyText: bodyLines.join('\n') });
+    }
+
     res.json({ ok: true, sent: recipients.length });
   } catch (err) {
     console.error('Graph confirm error:', err.message);
