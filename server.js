@@ -4,6 +4,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const os = require('os');
 const cookieParser = require('cookie-parser');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const DATA_FILE = path.join(__dirname, 'data.json');
@@ -15,6 +16,73 @@ const AZURE_CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI || 'http://localhost:3000/auth/callback';
 const GRAPH_SCOPES = 'Calendars.ReadWrite User.Read offline_access';
 const isOAuthConfigured = () => !!(AZURE_TENANT_ID && AZURE_CLIENT_ID && AZURE_CLIENT_SECRET);
+
+// ---- SMTP 設定 ----
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'スケジュール調整';
+
+function getSmtpTransporter() {
+  if (!SMTP_USER || !SMTP_PASS) return null;
+  return nodemailer.createTransport({
+    host: 'smtp.office365.com',
+    port: 587,
+    secure: false,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+    tls: { rejectUnauthorized: false }
+  });
+}
+
+function parseJpDateSrv(label) {
+  const m  = label.match(/(\d+)月(\d+)日[^\s　]*[\s　]+(\d+):(\d+)/);
+  const m2 = label.match(/(\d+)月(\d+)日/);
+  if (!m2) return null;
+  const month = parseInt(m ? m[1] : m2[1]);
+  const day   = parseInt(m ? m[2] : m2[2]);
+  const hour  = m ? parseInt(m[3]) : 10;
+  const min   = m ? parseInt(m[4]) : 0;
+  const now = new Date();
+  let year = now.getFullYear();
+  if (new Date(year, month-1, day) < new Date(now.getFullYear(), now.getMonth(), now.getDate())) year++;
+  const p = n => String(n).padStart(2,'0');
+  const fmt = d => `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00`;
+  return { start: fmt(new Date(year, month-1, day, hour, min)), end: fmt(new Date(year, month-1, day, hour+1, min)) };
+}
+
+function generateICS({ uid, title, location, description, dtstart, dtend, organizer, attendees }) {
+  const dtstamp = new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+  const fmtLocal = s => s.replace(/[-:]/g,'').replace('T','T'); // "2026-06-15T14:00:00" → "20260615T140000"
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//ScheduleApp//JP',
+    'CALSCALE:GREGORIAN',
+    'METHOD:REQUEST',
+    'BEGIN:VTIMEZONE',
+    'TZID:Asia/Tokyo',
+    'BEGIN:STANDARD',
+    'DTSTART:19700101T000000',
+    'TZOFFSETFROM:+0900',
+    'TZOFFSETTO:+0900',
+    'TZNAME:JST',
+    'END:STANDARD',
+    'END:VTIMEZONE',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${dtstamp}`,
+    `ORGANIZER;CN=${SMTP_FROM_NAME}:mailto:${organizer}`,
+    `DTSTART;TZID=Asia/Tokyo:${fmtLocal(dtstart)}`,
+    `DTEND;TZID=Asia/Tokyo:${fmtLocal(dtend)}`,
+    `SUMMARY:${title.replace(/[,;\\]/g, s => '\\'+s)}`,
+  ];
+  if (location) lines.push(`LOCATION:${location.replace(/[,;\\]/g, s => '\\'+s)}`);
+  if (description) lines.push(`DESCRIPTION:${description.replace(/\n/g,'\\n').replace(/[,;\\]/g, s => '\\'+s)}`);
+  attendees.forEach(a => {
+    lines.push(`ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=${a.name}:mailto:${a.email}`);
+  });
+  lines.push('END:VEVENT', 'END:VCALENDAR');
+  return lines.join('\r\n');
+}
 
 // ---- PostgreSQL（本番環境用）----
 let pgPool = null;
@@ -650,6 +718,60 @@ app.get('/api/events/:id/calendar.ics', async (req, res) => {
   res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="event.ics"`);
   res.send(ics);
+});
+
+// ---- 確定メール送信 ----
+app.post('/api/events/:id/send-confirm', async (req, res) => {
+  const { subject, location, memo, recipients, date_label } = req.body;
+  if (!subject || !Array.isArray(recipients) || recipients.length === 0) {
+    return res.status(400).json({ error: '件名と送信先は必須です' });
+  }
+  const transporter = getSmtpTransporter();
+  if (!transporter) {
+    return res.status(503).json({ error: 'メール送信が未設定です。管理者に連絡してください。' });
+  }
+
+  const dateTime = date_label ? parseJpDateSrv(date_label) : null;
+  let icsContent = null;
+  if (dateTime && SMTP_USER) {
+    const uid = `${req.params.id}-${Date.now()}@schedule-app`;
+    icsContent = generateICS({
+      uid,
+      title: subject,
+      location: location || '',
+      description: memo || '',
+      dtstart: dateTime.start,
+      dtend: dateTime.end,
+      organizer: SMTP_USER,
+      attendees: recipients.map(r => ({ name: r.name || r.email, email: r.email }))
+    });
+  }
+
+  const bodyLines = [`【${subject}】の日程が確定しました。`, ''];
+  if (date_label) bodyLines.push(`日時: ${date_label}`);
+  if (location)   bodyLines.push(`場所: ${location}`);
+  if (memo)       { bodyLines.push(''); bodyLines.push(memo); }
+  if (icsContent) bodyLines.push('\n※添付ファイルを開くとOutlookの予定表に追加できます。');
+  const bodyText = bodyLines.join('\n');
+
+  try {
+    await transporter.sendMail({
+      from: `"${SMTP_FROM_NAME}" <${SMTP_USER}>`,
+      to: recipients.map(r => r.name ? `"${r.name}" <${r.email}>` : r.email).join(', '),
+      subject,
+      text: bodyText,
+      ...(icsContent ? {
+        alternatives: [{
+          contentType: 'text/calendar; charset=utf-8; method=REQUEST',
+          content: Buffer.from(icsContent)
+        }]
+      } : {})
+    });
+    res.json({ ok: true, sent: recipients.length });
+  } catch (err) {
+    console.error('SMTP send error:', err);
+    res.status(500).json({ error: `送信失敗: ${err.message}` });
+  }
 });
 
 app.post('/api/events/:id/invited', async (req, res) => {
