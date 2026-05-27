@@ -29,7 +29,8 @@ function getSmtpTransporter() {
     port: 587,
     secure: false,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
-    tls: { rejectUnauthorized: false }
+    tls: { rejectUnauthorized: false },
+    family: 4  // IPv4強制（RailwayのIPv6接続エラー回避）
   });
 }
 
