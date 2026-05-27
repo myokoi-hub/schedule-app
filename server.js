@@ -24,14 +24,17 @@ const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'スケジュール調整';
 
 // Microsoft Graph API でメール送信（SMTP不要・HTTPS使用）
 async function getSmtpAccessToken() {
-  if (!AZURE_TENANT_ID || !AZURE_CLIENT_ID || !AZURE_CLIENT_SECRET || !SMTP_USER || !SMTP_PASS) return null;
+  if (!AZURE_TENANT_ID || !AZURE_CLIENT_ID || !AZURE_CLIENT_SECRET || !SMTP_USER || !SMTP_PASS) {
+    console.error('Graph token: 環境変数が不足しています');
+    return null;
+  }
   try {
     const params = new URLSearchParams({
       client_id:     AZURE_CLIENT_ID,
       client_secret: AZURE_CLIENT_SECRET,
       username:      SMTP_USER,
       password:      SMTP_PASS,
-      scope:         'https://graph.microsoft.com/.default',
+      scope:         'https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/User.Read',
       grant_type:    'password'
     });
     const res = await fetch(`https://login.microsoftonline.com/${AZURE_TENANT_ID}/oauth2/v2.0/token`, {
@@ -40,9 +43,14 @@ async function getSmtpAccessToken() {
       body: params.toString()
     });
     const data = await res.json();
+    if (data.error) {
+      console.error('Graph token エラー:', data.error, data.error_description);
+      return null;
+    }
+    console.log('Graph token 取得成功');
     return data.access_token || null;
   } catch (e) {
-    console.error('Graph token error:', e.message);
+    console.error('Graph token 例外:', e.message);
     return null;
   }
 }
@@ -62,15 +70,19 @@ async function sendMailViaGraph({ accessToken, from, recipients, subject, bodyTe
       }]
     } : {})
   };
+  console.log('Graph sendMail 送信先:', recipients.map(r => r.email).join(', '));
   const res = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(from)}/sendMail`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, saveToSentItems: false })
   });
+  console.log('Graph sendMail ステータス:', res.status);
   if (!res.ok) {
     const err = await res.text();
+    console.error('Graph sendMail エラー詳細:', err);
     throw new Error(`Graph sendMail failed: ${res.status} ${err}`);
   }
+  console.log('Graph sendMail 成功');
 }
 
 function parseJpDateSrv(label) {
