@@ -285,7 +285,7 @@
       };
 
       let tableHtml;
-      if (participants.length === 0) {
+      if (allTablePeople.length === 0) {
         tableHtml = `<p style="text-align:center;color:#aaa;padding:28px 0">まだ回答がありません</p>`;
       } else {
         const total = invited_count || participants.length;
