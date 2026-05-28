@@ -432,8 +432,10 @@
                 : `<strong>${participants.length}名</strong> 回答済み`}
             </span>
           </div>
-          <button class="btn btn-secondary" onclick="load()" style="font-size:13px;padding:6px 14px">更新</button>
-          <button class="btn btn-secondary" onclick="openEditModal()" style="font-size:13px;padding:6px 14px">変更</button>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-secondary" onclick="load()" style="font-size:13px;padding:6px 14px">更新</button>
+            <button class="btn btn-secondary" onclick="openEditModal()" style="font-size:13px;padding:6px 14px">変更</button>
+          </div>
         </div>
 
         ${tableHtml}
