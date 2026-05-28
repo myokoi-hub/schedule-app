@@ -565,7 +565,7 @@ app.get('/auth/logout', async (req, res) => {
 // ======== イベント API ========
 
 app.get('/api/ping', (req, res) => {
-  res.json({ version: 26, deployed: new Date().toISOString() });
+  res.json({ version: 27, deployed: new Date().toISOString() });
 });
 
 // ---- GAL（全社アドレス帳）取得 ----
@@ -699,7 +699,7 @@ app.get('/api/events/:id/results', async (req, res) => {
 });
 
 app.put('/api/events/:id', async (req, res) => {
-  const { title, description, deadline } = req.body;
+  const { title, description, deadline, dates } = req.body;
   if (!title) return res.status(400).json({ error: 'タイトルは必須です' });
   if (!deadline) return res.status(400).json({ error: '締切日は必須です' });
   const event = await getEvent(req.params.id);
@@ -707,6 +707,22 @@ app.put('/api/events/:id', async (req, res) => {
   event.title = title;
   event.description = description || '';
   event.deadline = deadline;
+  if (Array.isArray(dates)) {
+    const oldDates = event.dates;
+    let nextId = Math.max(0, ...oldDates.map(d => d.id)) + 1;
+    event.dates = dates.map(label => {
+      const existing = oldDates.find(d => d.label === label);
+      return existing || { id: nextId++, label };
+    });
+    const validIds = new Set(event.dates.map(d => d.id));
+    event.responses = event.responses.map(r => ({
+      ...r,
+      answers: Object.fromEntries(Object.entries(r.answers || {}).filter(([did]) => validIds.has(Number(did))))
+    }));
+    if (event.decided_date_id != null && !validIds.has(event.decided_date_id)) {
+      event.decided_date_id = null;
+    }
+  }
   await saveEvent(event);
   res.json({ success: true });
 });

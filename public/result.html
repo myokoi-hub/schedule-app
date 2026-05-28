@@ -89,6 +89,38 @@
     </div>
   </div>
 
+  <!-- 変更モーダル -->
+  <div class="modal-overlay" id="editModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal" style="max-height:85vh;overflow-y:auto">
+      <div class="modal-title">✏️ イベントを変更</div>
+      <div class="form-group">
+        <label>イベント名 <span style="color:#e55">*</span></label>
+        <input type="text" id="edit-title" style="font-size:14px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;width:100%;box-sizing:border-box;font-family:inherit">
+      </div>
+      <div class="form-group">
+        <label>メモ</label>
+        <textarea id="edit-description" rows="2" style="font-size:14px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;width:100%;box-sizing:border-box;font-family:inherit;resize:vertical"></textarea>
+      </div>
+      <div class="form-group">
+        <label>回答締切日 <span style="color:#e55">*</span></label>
+        <input type="date" id="edit-deadline" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box">
+      </div>
+      <div class="form-group">
+        <label>候補日程</label>
+        <div id="edit-dates-list" style="margin-bottom:8px"></div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input type="date" id="edit-new-date" style="flex:2;min-width:120px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit">
+          <input type="time" id="edit-new-time" value="10:00" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit">
+          <button class="btn btn-secondary" onclick="addEditDate()" style="white-space:nowrap;font-size:13px">＋追加</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary" id="edit-saveBtn" onclick="saveEventEdit()" style="flex:1">保存</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('editModal').style.display='none'">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
   <!-- コメントポップアップ -->
   <div id="commentPopup" onclick="this.style.display='none'"
     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2000;align-items:center;justify-content:center;padding:24px">
@@ -190,12 +222,18 @@
     let currentDecidedId = null;
     let currentInvited = [];
     let currentTitle = '';
+    let currentDates = [];
+    let currentDeadline = '';
+    let currentDescription = '';
 
     function render(data) {
       const { title, description, dates, responses, invited_count, deadline, decided_date_id, comments = {}, invited = [] } = data;
       currentDecidedId = decided_date_id;
       currentInvited = invited;
       currentTitle = title;
+      currentDates = dates;
+      currentDeadline = deadline || '';
+      currentDescription = description || '';
 
       // share URL
       const shareUrl = `${location.origin}/event.html?id=${eventId}`;
@@ -219,6 +257,10 @@
 
       // participants & answer map
       const participants = [...new Set(responses.map(r => r.participant_name))];
+      // 招待済みで未回答の人
+      const notRespondedNames = invited.map(c => c.name).filter(n => !participants.includes(n));
+      const allTablePeople = [...participants, ...notRespondedNames];
+      const notRespondedSet = new Set(notRespondedNames);
       const answerMap = {};
       responses.forEach(r => {
         if (!answerMap[r.participant_name]) answerMap[r.participant_name] = {};
@@ -249,15 +291,17 @@
           counts[d.id]['○'] > counts[best.id]['○'] ? d : best, dates[0]);
         const hasBest = bestDate && counts[bestDate.id]['○'] > 0;
 
-        const headerCols = participants.map(p => {
+        const headerCols = allTablePeople.map(p => {
           const parts = p.split(/[\s　]+/);
           const surname = parts[0] || p;
           const given   = parts[1] || '';
+          const isNR = notRespondedSet.has(p);
           return `
-          <th style="text-align:center;min-width:54px;padding:8px 4px;white-space:normal;word-break:break-all">
+          <th style="text-align:center;min-width:54px;padding:8px 4px;white-space:normal;word-break:break-all${isNR ? ';opacity:0.55' : ''}">
             <div style="font-size:12px;font-weight:bold;line-height:1.6">
               <div>${esc(surname)}</div>
               ${given ? `<div>${esc(given)}</div>` : ''}
+              ${isNR ? '<div style="font-size:10px;color:#aaa;font-weight:normal">未回答</div>' : ''}
             </div>
           </th>`;
         }).join('');
@@ -279,7 +323,7 @@
                   <div style="height:4px;background:${rateColor};border-radius:2px;width:${rate}%"></div>
                 </div>
               </td>
-              ${participants.map(p => `<td style="text-align:center;padding:8px 4px">${markHtml(answerMap[p]?.[d.id])}</td>`).join('')}
+              ${allTablePeople.map(p => `<td style="text-align:center;padding:8px 4px">${notRespondedSet.has(p) ? '<span style="color:#ccc">-</span>' : markHtml(answerMap[p]?.[d.id])}</td>`).join('')}
             </tr>`;
         }).join('');
 
@@ -288,7 +332,7 @@
           <tr style="background:#F8FAFC;border-top:2px solid #EEE">
             <td style="text-align:left;padding:8px 10px;font-size:12px;color:#888;font-weight:normal">コメント</td>
             <td></td>
-            ${participants.map(p => comments[p]
+            ${allTablePeople.map(p => comments[p]
               ? `<td style="text-align:center;padding:6px 4px">
                    <span class="comment-icon" onclick="showComment('${esc(comments[p]).replace(/'/g,"\\'")}','${esc(p)}')" title="${esc(comments[p])}">💬</span>
                  </td>`
@@ -386,6 +430,7 @@
             </span>
           </div>
           <button class="btn btn-secondary" onclick="load()" style="font-size:13px;padding:6px 14px">更新</button>
+          <button class="btn btn-secondary" onclick="openEditModal()" style="font-size:13px;padding:6px 14px">変更</button>
         </div>
 
         ${tableHtml}
@@ -587,6 +632,88 @@
         `当日はよろしくお願いいたします。`
       );
       window.location.href = `mailto:${emails.join(',')}?subject=${subject}&body=${body}`;
+    }
+
+    // ---- イベント変更 ----
+    let editDates = [];
+    let originalDateLabels = [];
+
+    function openEditModal() {
+      document.getElementById('edit-title').value = currentTitle;
+      document.getElementById('edit-description').value = currentDescription;
+      document.getElementById('edit-deadline').value = currentDeadline;
+      editDates = currentDates.map(d => ({ id: d.id, label: d.date_label }));
+      originalDateLabels = editDates.map(d => d.label);
+      renderEditDates();
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function renderEditDates() {
+      const el = document.getElementById('edit-dates-list');
+      if (editDates.length === 0) {
+        el.innerHTML = '<p style="font-size:13px;color:#aaa;margin:0">候補日がありません</p>';
+        return;
+      }
+      el.innerHTML = editDates.map((d, i) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#F0FFF4;border:1px solid #B3D9AE;border-radius:8px;padding:7px 10px;margin-bottom:5px">
+          <span style="font-size:13px">${esc(d.label)}</span>
+          <button onclick="removeEditDate(${i})" style="background:none;border:none;color:#e55;cursor:pointer;font-size:16px;padding:0 4px;line-height:1">×</button>
+        </div>`).join('');
+    }
+
+    function removeEditDate(idx) {
+      editDates.splice(idx, 1);
+      renderEditDates();
+    }
+
+    function addEditDate() {
+      const dateVal = document.getElementById('edit-new-date').value;
+      const timeVal = document.getElementById('edit-new-time').value || '10:00';
+      if (!dateVal) { showToast('日付を選択してください'); return; }
+      const d = new Date(dateVal + 'T00:00:00');
+      const wd = ['日','月','火','水','木','金','土'];
+      const label = `${d.getMonth()+1}月${d.getDate()}日（${wd[d.getDay()]}） ${timeVal}〜`;
+      if (editDates.some(ed => ed.label === label)) { showToast('すでに追加されています'); return; }
+      editDates.push({ id: null, label });
+      renderEditDates();
+      document.getElementById('edit-new-date').value = '';
+    }
+
+    async function saveEventEdit() {
+      const title = document.getElementById('edit-title').value.trim();
+      const description = document.getElementById('edit-description').value.trim();
+      const deadline = document.getElementById('edit-deadline').value;
+      if (!title) { showToast('イベント名を入力してください'); return; }
+      if (!deadline) { showToast('締切日を入力してください'); return; }
+      if (editDates.length === 0) { showToast('候補日程を1つ以上追加してください'); return; }
+
+      const btn = document.getElementById('edit-saveBtn');
+      btn.disabled = true; btn.textContent = '保存中…';
+
+      const datesChanged =
+        editDates.length !== originalDateLabels.length ||
+        editDates.some((d, i) => d.label !== originalDateLabels[i]);
+
+      try {
+        const res = await fetch(`/api/events/${eventId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description, deadline, dates: editDates.map(d => d.label) })
+        });
+        if (!res.ok) throw new Error('保存失敗');
+        document.getElementById('editModal').style.display = 'none';
+        showToast('変更を保存しました');
+        await load();
+        if (datesChanged && currentInvited.length > 0) {
+          if (confirm(`日程が変更されました。\n招待済みの${currentInvited.length}名に招待メールを再送しますか？`)) {
+            openMailModal();
+          }
+        }
+      } catch (err) {
+        showToast('エラー: ' + err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = '保存';
+      }
     }
 
     // ---- URLコピー ----
