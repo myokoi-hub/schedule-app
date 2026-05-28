@@ -565,7 +565,31 @@ app.get('/auth/logout', async (req, res) => {
 // ======== イベント API ========
 
 app.get('/api/ping', (req, res) => {
-  res.json({ version: 25, deployed: new Date().toISOString() });
+  res.json({ version: 26, deployed: new Date().toISOString() });
+});
+
+// ---- GAL（全社アドレス帳）取得 ----
+app.get('/api/gal-users', async (req, res) => {
+  try {
+    const token = await getSmtpAccessToken();
+    if (!token) return res.status(503).json({ error: 'トークン取得失敗' });
+    const usersRes = await fetch(
+      'https://graph.microsoft.com/v1.0/users?$select=displayName,mail,userPrincipalName&$top=999',
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+    if (!usersRes.ok) {
+      const err = await usersRes.text();
+      return res.status(500).json({ error: `Graph API error: ${err}` });
+    }
+    const data = await usersRes.json();
+    const users = (data.value || [])
+      .map(u => ({ name: u.displayName || '', email: u.mail || u.userPrincipalName || '' }))
+      .filter(u => u.email && u.email.includes('@') && !u.email.includes('#EXT#'))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/events', async (req, res) => {

@@ -49,6 +49,7 @@
 
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn btn-add" id="addBtn" onclick="toggleForm(true)" style="flex:1">＋ 連絡先を追加</button>
+        <button class="btn btn-secondary" onclick="openGalModal()" style="white-space:nowrap">🔄 GALから同期</button>
         <button class="btn btn-secondary" id="toggleListBtn" onclick="toggleList()" style="white-space:nowrap">一覧を表示 ▼</button>
       </div>
 
@@ -72,6 +73,23 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <!-- GAL同期モーダル -->
+  <div class="modal-overlay" id="galModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal">
+      <div class="modal-title">🔄 GALから同期</div>
+      <p style="font-size:13px;color:#666;margin-bottom:12px">インポートするメンバーを選択してください</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="btn btn-secondary" onclick="galSelectAll(true)" style="flex:1;font-size:13px">全選択</button>
+        <button class="btn btn-secondary" onclick="galSelectAll(false)" style="flex:1;font-size:13px">全解除</button>
+      </div>
+      <div id="galList" style="max-height:50vh;overflow-y:auto;border:1px solid #eee;border-radius:8px"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary" id="galImportBtn" onclick="galImport()" style="flex:1">📥 インポート</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('galModal').style.display='none'">キャンセル</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     let allContacts = [];
@@ -312,6 +330,89 @@
 
     function esc(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ---- GAL同期 ----
+    let galUsers = [];
+    let galSelected = new Set();
+
+    async function openGalModal() {
+      document.getElementById('galModal').style.display = 'flex';
+      document.getElementById('galList').innerHTML = '<p style="text-align:center;color:#aaa;padding:24px;font-size:13px">読み込み中...</p>';
+      try {
+        const res = await fetch('/api/gal-users');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '取得失敗');
+        galUsers = data;
+        // 未登録ユーザーをデフォルト選択
+        galSelected = new Set(
+          data.filter(u => !allContacts.some(c => c.email.toLowerCase() === u.email.toLowerCase()))
+               .map(u => u.email)
+        );
+        renderGalList();
+      } catch (err) {
+        document.getElementById('galList').innerHTML = `<p style="text-align:center;color:#e55;padding:20px;font-size:13px">${esc(err.message)}</p>`;
+      }
+    }
+
+    function renderGalList() {
+      const list = document.getElementById('galList');
+      if (galUsers.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px">ユーザーが見つかりません</p>';
+        return;
+      }
+      list.innerHTML = galUsers.map(u => {
+        const already = allContacts.some(c => c.email.toLowerCase() === u.email.toLowerCase());
+        const sel = galSelected.has(u.email);
+        return `
+          <div class="contact-picker-item${sel ? ' cp-selected' : ''}" onclick="galToggle('${esc(u.email)}')" style="${already ? 'opacity:0.55' : ''}">
+            <div class="contact-check">${sel ? '✓' : ''}</div>
+            <div class="contact-info">
+              <div class="contact-name">${esc(u.name)}${already ? ' <span style="font-size:11px;color:#5BAD4A;font-weight:normal">登録済み</span>' : ''}</div>
+              <div class="contact-email">${esc(u.email)}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function galToggle(email) {
+      if (galSelected.has(email)) galSelected.delete(email);
+      else galSelected.add(email);
+      renderGalList();
+    }
+
+    function galSelectAll(select) {
+      if (select) galUsers.forEach(u => galSelected.add(u.email));
+      else galSelected.clear();
+      renderGalList();
+    }
+
+    async function galImport() {
+      const toImport = galUsers.filter(u =>
+        galSelected.has(u.email) &&
+        !allContacts.some(c => c.email.toLowerCase() === u.email.toLowerCase())
+      );
+      if (toImport.length === 0) { showToast('新しいインポート対象がありません'); return; }
+      const btn = document.getElementById('galImportBtn');
+      btn.disabled = true;
+      btn.textContent = 'インポート中…';
+      let success = 0, failed = 0;
+      for (const u of toImport) {
+        try {
+          const res = await fetch('/api/contacts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: u.name, email: u.email })
+          });
+          if (res.ok) success++;
+          else failed++;
+        } catch { failed++; }
+      }
+      document.getElementById('galModal').style.display = 'none';
+      showToast(`${success}件インポートしました${failed > 0 ? `（${failed}件失敗）` : ''}`);
+      await renderList();
+      btn.disabled = false;
+      btn.textContent = '📥 インポート';
     }
 
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
