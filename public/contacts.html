@@ -49,7 +49,7 @@
 
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn btn-add" id="addBtn" onclick="toggleForm(true)" style="flex:1">＋ 連絡先を追加</button>
-        <button class="btn btn-secondary" onclick="openGalModal()" style="flex:1;white-space:nowrap">🔄 GALから同期</button>
+        <button class="btn btn-secondary" onclick="openGalAuth()" style="flex:1;white-space:nowrap">🔑 GALから同期</button>
       </div>
       <div style="margin-top:6px">
         <button class="btn btn-secondary" id="toggleListBtn" onclick="toggleList()" style="width:100%">一覧を表示 ▼</button>
@@ -75,6 +75,22 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <!-- パスワード認証モーダル -->
+  <div class="modal-overlay" id="galAuthModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal" style="max-width:320px">
+      <div class="modal-title">🔑 管理者パスワード</div>
+      <p style="font-size:13px;color:#666;margin-bottom:14px">GAL同期を使用するにはパスワードが必要です</p>
+      <input type="password" id="galPassword" placeholder="パスワードを入力"
+        style="font-size:15px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;width:100%;box-sizing:border-box;font-family:inherit;margin-bottom:12px"
+        onkeydown="if(event.key==='Enter')verifyGalPassword()">
+      <p id="galAuthError" style="color:#e55;font-size:13px;text-align:center;margin-bottom:8px;display:none">パスワードが違います</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="verifyGalPassword()" style="flex:1">確認</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('galAuthModal').style.display='none'">キャンセル</button>
+      </div>
+    </div>
+  </div>
 
   <!-- GAL同期モーダル -->
   <div class="modal-overlay" id="galModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
@@ -332,6 +348,37 @@
 
     function esc(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ---- GAL認証 ----
+    function openGalAuth() {
+      document.getElementById('galPassword').value = '';
+      document.getElementById('galAuthError').style.display = 'none';
+      document.getElementById('galAuthModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('galPassword').focus(), 100);
+    }
+
+    async function verifyGalPassword() {
+      const password = document.getElementById('galPassword').value;
+      if (!password) return;
+      try {
+        const res = await fetch('/api/admin-auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          document.getElementById('galAuthModal').style.display = 'none';
+          openGalModal();
+        } else {
+          document.getElementById('galAuthError').style.display = 'block';
+          document.getElementById('galPassword').value = '';
+          document.getElementById('galPassword').focus();
+        }
+      } catch {
+        document.getElementById('galAuthError').style.display = 'block';
+      }
     }
 
     // ---- GAL同期 ----
