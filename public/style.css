@@ -522,12 +522,24 @@ input[type="text"]:focus, textarea:focus {
 
 /* コメントアイコン */
 .comment-icon {
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
-  display: inline-block;
-  transition: transform 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #E8F5E9;
+  border-radius: 50%;
+  border: 2px solid #5BAD4A;
+  transition: transform 0.15s, background 0.15s;
+  animation: commentPulse 2s ease-in-out infinite;
 }
-.comment-icon:hover { transform: scale(1.25); }
+.comment-icon:hover { transform: scale(1.2); background: #C8E6C9; }
+@keyframes commentPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(91,173,74,0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(91,173,74,0); }
+}
 
 /* 確定日バナー */
 .decided-banner {
