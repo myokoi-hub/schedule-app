@@ -529,16 +529,16 @@ input[type="text"]:focus, textarea:focus {
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: #E8F5E9;
+  background: #FFF0F0;
   border-radius: 50%;
-  border: 2px solid #5BAD4A;
+  border: 2px solid #E63946;
   transition: transform 0.15s, background 0.15s;
   animation: commentPulse 2s ease-in-out infinite;
 }
-.comment-icon:hover { transform: scale(1.2); background: #C8E6C9; }
+.comment-icon:hover { transform: scale(1.2); background: #FFD6D8; }
 @keyframes commentPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(91,173,74,0.4); }
-  50% { box-shadow: 0 0 0 5px rgba(91,173,74,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(230,57,70,0); }
 }
 
 /* 確定日バナー */
