@@ -259,9 +259,19 @@
       const participants = [...new Set(responses.map(r => r.participant_name))];
       // 招待済みで未回答の人（回答数が招待数に達していたら表示しない）
       const normName = s => s.replace(/[\s　]+/g,'').toLowerCase();
-      const isSamePerson = (a, b) => { const na = normName(a), nb = normName(b); return na === nb || na.includes(nb) || nb.includes(na); };
+      const respondedSet = new Set();
+      // Step1: 完全一致
+      participants.forEach(p => {
+        invited.forEach(c => { if (normName(c.name) === normName(p)) respondedSet.add(normName(c.name)); });
+      });
+      // Step2: 部分一致（まだ未マッチの回答者のみ、1人にしか当たらない場合だけ適用）
+      participants.filter(p => !invited.some(c => normName(c.name) === normName(p))).forEach(p => {
+        const np = normName(p);
+        const hits = invited.filter(c => { const nc = normName(c.name); return !respondedSet.has(nc) && (nc.includes(np) || np.includes(nc)); });
+        if (hits.length === 1) respondedSet.add(normName(hits[0].name));
+      });
       const notRespondedNames = participants.length < (invited.length || 0)
-        ? invited.map(c => c.name).filter(n => !participants.some(p => isSamePerson(p, n)))
+        ? invited.map(c => c.name).filter(n => !respondedSet.has(normName(n)))
         : [];
       const allTablePeople = [...participants, ...notRespondedNames];
       const notRespondedSet = new Set(notRespondedNames);
