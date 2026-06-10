@@ -259,8 +259,9 @@
       const participants = [...new Set(responses.map(r => r.participant_name))];
       // 招待済みで未回答の人（回答数が招待数に達していたら表示しない）
       const normName = s => s.replace(/[\s　]+/g,'').toLowerCase();
+      const isSamePerson = (a, b) => { const na = normName(a), nb = normName(b); return na === nb || na.includes(nb) || nb.includes(na); };
       const notRespondedNames = participants.length < (invited.length || 0)
-        ? invited.map(c => c.name).filter(n => !participants.some(p => normName(p) === normName(n)))
+        ? invited.map(c => c.name).filter(n => !participants.some(p => isSamePerson(p, n)))
         : [];
       const allTablePeople = [...participants, ...notRespondedNames];
       const notRespondedSet = new Set(notRespondedNames);
