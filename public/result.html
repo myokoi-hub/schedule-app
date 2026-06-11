@@ -678,6 +678,7 @@
     }
 
     function removeEditDate(idx) {
+      if (!confirm(`「${editDates[idx].label}」を削除しますか？`)) return;
       editDates.splice(idx, 1);
       renderEditDates();
     }
