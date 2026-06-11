@@ -678,7 +678,7 @@
     }
 
     function removeEditDate(idx) {
-      if (!confirm(`「${editDates[idx].label}」を削除しますか？`)) return;
+      if (!confirm(`「${editDates[idx].label}」を削除します。\nこの日程への全員の回答も削除されますが、よろしいですか？`)) return;
       editDates.splice(idx, 1);
       renderEditDates();
     }
