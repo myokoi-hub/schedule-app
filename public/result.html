@@ -452,10 +452,9 @@
         ${tableHtml}
         ${recommendHtml}
 
-        <div style="margin-top:20px;text-align:center">
-          <a href="/event.html?id=${eventId}" class="btn btn-secondary">自分も回答する</a>
-          &nbsp;
-          <a href="/" class="btn btn-secondary">新しいイベントを作る</a>
+        <div style="margin-top:20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px">
+          <a href="/event.html?id=${eventId}" class="btn btn-primary" style="width:100%;max-width:320px">回答する / 回答を修正する</a>
+          <a href="/" class="btn btn-secondary" style="width:100%;max-width:320px">新しいイベントを作る</a>
         </div>
       `;
     }
