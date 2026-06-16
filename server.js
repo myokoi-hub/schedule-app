@@ -904,7 +904,7 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
         <div style="border:2px solid #5059C9;border-radius:10px;padding:20px;margin:24px 0;background:#f4f4ff;">
           <div style="color:#5059C9;font-size:17px;font-weight:bold;margin-bottom:12px;">📹 Microsoft Teams 会議</div>
           <div style="margin-bottom:14px;">
-            <a href="${joinUrl}" style="display:inline-block;background:#5059C9;color:#fff;font-weight:bold;font-size:15px;padding:10px 28px;border-radius:6px;text-decoration:none;">会議に参加する</a>
+            <a href="${joinUrl}" style="display:inline-block;background:#5059C9;color:#fff;font-weight:bold;font-size:18px;padding:14px 48px;border-radius:8px;text-decoration:none;">会議に参加する</a>
           </div>
           <div style="font-size:13px;color:#5059C9;line-height:2;">
             ${meetingIdFormatted ? `<div>会議 ID: ${meetingIdFormatted}</div>` : ''}
