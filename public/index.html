@@ -119,7 +119,8 @@
     let today    = new Date();
     let curYear  = today.getFullYear();
     let curMonth = today.getMonth();
-    let selected = {}; // key: "YYYY-MM-DD", value: { label, time }
+    let selected = {}; // key: "YYYY-MM-DD", value: [{ id, label, time }]
+    let slotCounter = 0;
 
     function pad(n){ return String(n).padStart(2,'0'); }
 
@@ -146,7 +147,7 @@
         const dow = dt.getDay();
         const isToday = (dt.toDateString() === today.toDateString());
         const isPast  = dt < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const isSel   = !!selected[key];
+        const isSel   = !!(selected[key] && selected[key].length > 0);
 
         let cls = 'cal-day';
         if(dow===0) cls += ' cal-sun';
@@ -168,11 +169,8 @@
     }
 
     function toggleDate(key, label){
-      if(selected[key]){
-        delete selected[key];
-      } else {
-        selected[key] = { label, time:'00:00' };
-      }
+      if(!selected[key]) selected[key] = [];
+      selected[key].push({ id: slotCounter++, label, time:'00:00' });
       renderCalendar();
       renderChips();
     }
@@ -181,54 +179,61 @@
       const keys = Object.keys(selected).sort();
       const hint = document.getElementById('noDateHint');
       const container = document.getElementById('selectedChips');
+      const total = keys.reduce((s,k) => s + selected[k].length, 0);
 
-      hint.style.display = keys.length ? 'none' : 'block';
-      container.innerHTML = keys.map(key=>`
-        <div class="chip" id="chip-${key}">
-          <span class="chip-label">${selected[key].label}</span>
-          <div class="ctp" id="ctp-${key}">
-            <button class="ctp-btn" onclick="ctpOpen('${key}')">${selected[key].time || '00:00'}</button>
-          </div>
-          <button class="chip-remove" onclick="removeDate('${key}')">×</button>
-        </div>`
+      hint.style.display = total ? 'none' : 'block';
+      container.innerHTML = keys.map(key =>
+        selected[key].map(slot => `
+          <div class="chip" id="chip-${slot.id}">
+            <span class="chip-label">${slot.label}</span>
+            <div class="ctp" id="ctp-${slot.id}">
+              <button class="ctp-btn" onclick="ctpOpen('${key}',${slot.id})">${slot.time || '00:00'}</button>
+            </div>
+            <button class="chip-remove" onclick="removeDate('${key}',${slot.id})">×</button>
+          </div>`).join('')
       ).join('');
     }
 
     // ---- カスタム時間ピッカー ----
-    function ctpOpen(key) {
-      const wrap = document.getElementById(`ctp-${key}`);
-      const [h, m] = (selected[key].time || '00:00').split(':');
+    function ctpOpen(key, id) {
+      const slot = selected[key].find(s => s.id === id);
+      const wrap = document.getElementById(`ctp-${id}`);
+      const [h, m] = (slot.time || '00:00').split(':');
       const H = Array.from({length:24}, (_,i) => String(i).padStart(2,'0'));
       const M = Array.from({length:60}, (_,i) => String(i).padStart(2,'0'));
       wrap.innerHTML =
-        `<select class="ctp-sel" onchange="ctpHour('${key}',this.value)">` +
+        `<select class="ctp-sel" onchange="ctpHour('${key}',${id},this.value)">` +
         H.map(hh => `<option${hh===h?' selected':''}>${hh}</option>`).join('') +
         `</select><span class="ctp-colon">:</span>` +
-        `<select class="ctp-sel" onchange="ctpMin('${key}',this.value)">` +
+        `<select class="ctp-sel" onchange="ctpMin('${key}',${id},this.value)">` +
         M.map(mm => `<option${mm===m?' selected':''}>${mm}</option>`).join('') +
         `</select>`;
     }
 
-    function ctpClose(key) {
-      const wrap = document.getElementById(`ctp-${key}`);
+    function ctpClose(key, id) {
+      const slot = selected[key].find(s => s.id === id);
+      const wrap = document.getElementById(`ctp-${id}`);
       if (wrap) wrap.innerHTML =
-        `<button class="ctp-btn" onclick="ctpOpen('${key}')">${selected[key].time}</button>`;
+        `<button class="ctp-btn" onclick="ctpOpen('${key}',${id})">${slot.time}</button>`;
     }
 
-    function ctpHour(key, val) {
-      const m = (selected[key].time || '00:00').split(':')[1] || '00';
-      selected[key].time = `${val}:${m}`;
-      ctpClose(key);
+    function ctpHour(key, id, val) {
+      const slot = selected[key].find(s => s.id === id);
+      const m = (slot.time || '00:00').split(':')[1] || '00';
+      slot.time = `${val}:${m}`;
+      ctpClose(key, id);
     }
 
-    function ctpMin(key, val) {
-      const h = (selected[key].time || '00:00').split(':')[0] || '00';
-      selected[key].time = `${h}:${val}`;
-      ctpClose(key);
+    function ctpMin(key, id, val) {
+      const slot = selected[key].find(s => s.id === id);
+      const h = (slot.time || '00:00').split(':')[0] || '00';
+      slot.time = `${h}:${val}`;
+      ctpClose(key, id);
     }
 
-    function removeDate(key){
-      delete selected[key];
+    function removeDate(key, id){
+      selected[key] = selected[key].filter(s => s.id !== id);
+      if(selected[key].length === 0) delete selected[key];
       renderCalendar();
       renderChips();
     }
@@ -248,10 +253,11 @@
       btn.disabled = true;
       btn.textContent = '作成中…';
 
-      const dates = keys.map(k => {
-        const time = selected[k].time ? ` ${selected[k].time}〜` : '';
-        return selected[k].label + time;
-      });
+      const dates = keys.flatMap(k =>
+        [...selected[k]]
+          .sort((a,b) => a.time.localeCompare(b.time))
+          .map(slot => slot.label + (slot.time ? ` ${slot.time}〜` : ''))
+      );
 
       try{
         const res = await fetch('/api/events',{
