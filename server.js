@@ -854,6 +854,8 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
         start: { dateTime: dateTime.start, timeZone: 'Asia/Tokyo' },
         end:   { dateTime: dateTime.end,   timeZone: 'Asia/Tokyo' },
         attendees,
+        isOnlineMeeting: true,
+        onlineMeetingProvider: 'teamsForBusiness',
         ...(location ? { location: { displayName: location } } : {})
       };
       console.log('Graph createEvent 送信先:', recipients.map(r => r.email).join(', '));
