@@ -875,7 +875,9 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
       console.log('Graph createEvent 成功（会議出席依頼送信済み）');
       const evData = await evRes.json().catch(() => ({}));
       const joinUrl = evData.onlineMeeting?.joinUrl;
-      let meetingIdFormatted = '';
+      const directConfId = evData.onlineMeeting?.conferenceId;
+      console.log('onlineMeeting raw:', JSON.stringify(evData.onlineMeeting));
+      let meetingIdFormatted = directConfId ? String(directConfId).replace(/(\d{3})(?=\d)/g, '$1 ') : '';
       let passcode = '';
       if (joinUrl) {
         // Graph API から会議の詳細（会議ID・パスコード）を取得
@@ -884,15 +886,19 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
             `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(SMTP_USER)}/onlineMeetings?$filter=joinWebUrl eq '${joinUrl}'`,
             { headers: { 'Authorization': `Bearer ${token}` } }
           );
+          console.log('onlineMeetings API status:', mRes.status);
           if (mRes.ok) {
             const mData = await mRes.json();
             const mtg = mData.value?.[0];
+            console.log('onlineMeeting detail:', JSON.stringify(mtg));
             if (mtg) {
               if (mtg.conferenceId) meetingIdFormatted = String(mtg.conferenceId).replace(/(\d{3})(?=\d)/g, '$1 ');
               passcode = mtg.joinMeetingIdSettings?.passCode || '';
             }
+          } else {
+            console.log('onlineMeetings API error:', await mRes.text());
           }
-        } catch(e) {}
+        } catch(e) { console.log('onlineMeetings exception:', e.message); }
       }
       const teamsBlock = joinUrl ? `
         <div style="border:2px solid #5059C9;border-radius:10px;padding:20px;margin:24px 0;background:#f4f4ff;">
@@ -900,8 +906,7 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
           <div style="margin-bottom:14px;">
             <a href="${joinUrl}" style="display:inline-block;background:#5059C9;color:#fff;font-weight:bold;font-size:15px;padding:10px 28px;border-radius:6px;text-decoration:none;">会議に参加する</a>
           </div>
-          <div style="font-size:13px;color:#333;line-height:2;">
-            <div>参加リンク: <a href="${joinUrl}" style="color:#5059C9;word-break:break-all;">${joinUrl}</a></div>
+          <div style="font-size:13px;color:#5059C9;line-height:2;">
             ${meetingIdFormatted ? `<div>会議 ID: ${meetingIdFormatted}</div>` : ''}
             ${passcode ? `<div>パスコード: ${passcode}</div>` : ''}
           </div>
