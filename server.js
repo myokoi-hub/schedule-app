@@ -878,11 +878,7 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
       let meetingIdFormatted = '';
       let passcode = '';
       if (joinUrl) {
-        try {
-          const rawId = new URL(joinUrl).pathname.split('/').pop().replace(/\D/g, '');
-          meetingIdFormatted = rawId.replace(/(\d{3})(?=\d)/g, '$1 ');
-        } catch(e) {}
-        // Graph API から会議の詳細（パスコード）を取得
+        // Graph API から会議の詳細（会議ID・パスコード）を取得
         try {
           const mRes = await fetch(
             `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(SMTP_USER)}/onlineMeetings?$filter=joinWebUrl eq '${joinUrl}'`,
@@ -899,13 +895,13 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
         } catch(e) {}
       }
       const teamsBlock = joinUrl ? `
-        <div style="background:#5059C9;border-radius:10px;padding:24px 20px;margin:24px 0;">
-          <div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:14px;text-align:center;">📹 Microsoft Teams 会議</div>
-          <div style="text-align:center;margin-bottom:16px;">
-            <a href="${joinUrl}" style="display:inline-block;background:#fff;color:#5059C9;font-weight:bold;font-size:16px;padding:12px 32px;border-radius:6px;text-decoration:none;">会議に参加する</a>
+        <div style="border:2px solid #5059C9;border-radius:10px;padding:20px;margin:24px 0;background:#f4f4ff;">
+          <div style="color:#5059C9;font-size:17px;font-weight:bold;margin-bottom:12px;">📹 Microsoft Teams 会議</div>
+          <div style="margin-bottom:14px;">
+            <a href="${joinUrl}" style="display:inline-block;background:#5059C9;color:#fff;font-weight:bold;font-size:15px;padding:10px 28px;border-radius:6px;text-decoration:none;">会議に参加する</a>
           </div>
-          <div style="color:#cce;font-size:13px;line-height:1.8;">
-            <div>参加リンク: <a href="${joinUrl}" style="color:#aaf;word-break:break-all;">${joinUrl}</a></div>
+          <div style="font-size:13px;color:#333;line-height:2;">
+            <div>参加リンク: <a href="${joinUrl}" style="color:#5059C9;word-break:break-all;">${joinUrl}</a></div>
             ${meetingIdFormatted ? `<div>会議 ID: ${meetingIdFormatted}</div>` : ''}
             ${passcode ? `<div>パスコード: ${passcode}</div>` : ''}
           </div>
