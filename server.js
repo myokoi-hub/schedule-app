@@ -53,11 +53,13 @@ async function getSmtpAccessToken() {
   }
 }
 
-async function sendMailViaGraph({ accessToken, from, recipients, subject, bodyText, icsContent }) {
+async function sendMailViaGraph({ accessToken, from, recipients, subject, bodyText, bodyHtml, icsContent }) {
   const toRecipients = recipients.map(r => ({ emailAddress: { address: r.email, name: r.name || r.email } }));
   const message = {
     subject,
-    body: { contentType: 'Text', content: bodyText },
+    body: bodyHtml
+      ? { contentType: 'HTML', content: bodyHtml }
+      : { contentType: 'Text', content: bodyText },
     toRecipients,
     ...(icsContent ? {
       attachments: [{
@@ -871,6 +873,25 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
         throw new Error(`Graph createEvent failed: ${evRes.status} ${err}`);
       }
       console.log('Graph createEvent 成功（会議出席依頼送信済み）');
+      const evData = await evRes.json().catch(() => ({}));
+      const joinUrl = evData.onlineMeeting?.joinUrl;
+      const teamsBlock = joinUrl ? `
+        <div style="background:#5059C9;border-radius:10px;padding:24px 20px;margin:24px 0;text-align:center;">
+          <div style="color:#fff;font-size:18px;font-weight:bold;margin-bottom:6px;">📹 Microsoft Teams 会議</div>
+          <div style="margin:14px 0;">
+            <a href="${joinUrl}" style="display:inline-block;background:#fff;color:#5059C9;font-weight:bold;font-size:16px;padding:12px 32px;border-radius:6px;text-decoration:none;">会議に参加する</a>
+          </div>
+        </div>` : '';
+      const htmlBody = `<div style="font-family:sans-serif;max-width:600px;margin:auto;color:#222;">
+        <h2 style="color:#333;">【${subject}】の日程が確定しました</h2>
+        <table style="border-collapse:collapse;width:100%;margin-bottom:16px;">
+          ${date_label ? `<tr><td style="padding:8px 12px;background:#f4f4f4;font-weight:bold;width:80px;">日時</td><td style="padding:8px 12px;border-bottom:1px solid #eee;">${date_label}</td></tr>` : ''}
+          ${location   ? `<tr><td style="padding:8px 12px;background:#f4f4f4;font-weight:bold;">場所</td><td style="padding:8px 12px;border-bottom:1px solid #eee;">${location}</td></tr>` : ''}
+        </table>
+        ${memo ? `<p style="color:#444;">${memo.replace(/\n/g,'<br>')}</p>` : ''}
+        ${teamsBlock}
+      </div>`;
+      await sendMailViaGraph({ accessToken: token, from: SMTP_USER, recipients, subject, bodyHtml: htmlBody });
     } else {
       // 日時が解析できない場合は通常メール送信
       const bodyLines = [`【${subject}】の日程が確定しました。`, ''];
