@@ -853,7 +853,7 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
       }));
       const graphEvent = {
         subject,
-        body: { contentType: 'Text', content: memo || '' },
+        body: { contentType: 'Text', content: [memo, senderName ? `${senderName}より` : ''].filter(Boolean).join('\n\n') },
         start: { dateTime: dateTime.start, timeZone: 'Asia/Tokyo' },
         end:   { dateTime: dateTime.end,   timeZone: 'Asia/Tokyo' },
         attendees,
