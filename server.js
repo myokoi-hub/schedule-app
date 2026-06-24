@@ -814,7 +814,7 @@ app.get('/api/events/:id/calendar.ics', async (req, res) => {
 
 // ---- 日程調整招待メール送信 ----
 app.post('/api/events/:id/send-invite', async (req, res) => {
-  const { subject, body, recipients } = req.body;
+  const { subject, body, recipients, senderName } = req.body;
   if (!subject || !Array.isArray(recipients) || recipients.length === 0) {
     return res.status(400).json({ error: '件名と送信先は必須です' });
   }
@@ -822,7 +822,8 @@ app.post('/api/events/:id/send-invite', async (req, res) => {
   try {
     const token = await getSmtpAccessToken();
     if (!token) return res.status(503).json({ error: 'メール認証に失敗しました。SMTP_USER/PASSを確認してください。' });
-    await sendMailViaGraph({ accessToken: token, from: SMTP_USER, recipients, subject, bodyText: body || '' });
+    const bodyWithSender = senderName ? `${body || ''}\n\n---\n${senderName}より` : (body || '');
+    await sendMailViaGraph({ accessToken: token, from: SMTP_USER, recipients, subject, bodyText: bodyWithSender });
     res.json({ ok: true, sent: recipients.length });
   } catch (err) {
     console.error('Graph invite error:', err.message);
@@ -832,7 +833,7 @@ app.post('/api/events/:id/send-invite', async (req, res) => {
 
 // ---- 確定メール送信 ----
 app.post('/api/events/:id/send-confirm', async (req, res) => {
-  const { subject, location, memo, recipients, date_label } = req.body;
+  const { subject, location, memo, recipients, date_label, senderName } = req.body;
   if (!subject || !Array.isArray(recipients) || recipients.length === 0) {
     return res.status(400).json({ error: '件名と送信先は必須です' });
   }
@@ -919,6 +920,7 @@ app.post('/api/events/:id/send-confirm', async (req, res) => {
         </table>
         ${memo ? `<p style="color:#444;">${memo.replace(/\n/g,'<br>')}</p>` : ''}
         ${teamsBlock}
+        ${senderName ? `<p style="color:#888;font-size:13px;border-top:1px solid #eee;margin-top:20px;padding-top:12px;">${senderName}より</p>` : ''}
       </div>`;
       await sendMailViaGraph({ accessToken: token, from: SMTP_USER, recipients, subject, bodyHtml: htmlBody });
     } else {

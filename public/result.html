@@ -50,6 +50,11 @@
       <div id="cm-dateInfo" style="background:#F0FFF4;border:1px solid #B3D9AE;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#388E3C;font-weight:bold"></div>
 
       <div class="form-group">
+        <label>送信者名 <span style="color:#e55">*</span></label>
+        <input type="text" id="cm-senderName" placeholder="例: 横井真奈美" style="font-size:14px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;width:100%;box-sizing:border-box;font-family:inherit">
+      </div>
+
+      <div class="form-group">
         <label>件名 <span style="color:#e55">*</span></label>
         <input type="text" id="cm-subject" style="font-size:14px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;width:100%;box-sizing:border-box;font-family:inherit">
       </div>
@@ -136,6 +141,11 @@
   <div class="modal-overlay" id="mailModal" style="display:none" onclick="overlayClose(event)">
     <div class="modal">
       <div class="modal-title">✉️ 日程調整メールを送る</div>
+
+      <div class="form-group" style="margin-bottom:10px">
+        <label>送信者名 <span style="color:#e55">*</span></label>
+        <input type="text" id="mailSenderName" placeholder="例: 横井真奈美" style="font-size:14px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;width:100%;box-sizing:border-box;font-family:inherit">
+      </div>
 
       <div class="form-group" style="margin-bottom:10px">
         <label>件名</label>
@@ -563,9 +573,11 @@
     }
 
     async function sendConfirmMail() {
+      const senderName = document.getElementById('cm-senderName').value.trim();
       const subject  = document.getElementById('cm-subject').value.trim();
       const location = document.getElementById('cm-location').value.trim();
       const memo     = document.getElementById('cm-memo').value.trim();
+      if (!senderName)           { showToast('送信者名を入力してください'); return; }
       if (!subject)              { showToast('件名を入力してください'); return; }
       if (cmSelected.length === 0) { showToast('送信先を1人以上選んでください'); return; }
       const btn = document.getElementById('cm-sendBtn');
@@ -576,7 +588,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            subject, location, memo,
+            subject, location, memo, senderName,
             recipients: cmSelected.map(c => ({ name: c.name, email: c.email })),
             date_label: cmDateLabel
           })
@@ -896,8 +908,10 @@
         showToast('宛先を1人以上選んでください');
         return;
       }
+      const senderName = document.getElementById('mailSenderName').value.trim();
       const subject = document.getElementById('mailSubject').value.trim();
       const body    = document.getElementById('mailBody').value.trim();
+      if (!senderName) { showToast('送信者名を入力してください'); return; }
       if (!subject) { showToast('件名を入力してください'); return; }
 
       const btn = document.getElementById('mailSendBtn');
@@ -916,7 +930,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            subject, body,
+            subject, body, senderName,
             recipients: mailData.selected.map(c => ({ name: c.name, email: c.email }))
           })
         });
